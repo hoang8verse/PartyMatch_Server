@@ -165,7 +165,6 @@ const PartyMatchSocket = (server) => {
                     if(host == "1"){
                         _room = room;
                     } else {
-                        // _room = room.substring(0,room.length-1);
                         _room = room;
                         if(!rooms[_room]){
                             let params = {
@@ -234,13 +233,8 @@ const PartyMatchSocket = (server) => {
                     player.room = room;
                     player.isSpectator = data.isSpectator;
                     player.gender = data.gender;
-                    // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
-                    // console.log( "  ranGender ----------- " , ranGender)
-                    // player.gender = ranGender;
+
                     console.log( "  new player created  ----------- " , player)
-                    // let _pos = parseVector3(data.pos);
-                    // console.log("pos :   " , _pos);
-                    // player.position = _pos;
     
                     rooms[room][clientId]["player"] = player;// save player in room array
                     let players = [];
@@ -373,6 +367,8 @@ const PartyMatchSocket = (server) => {
                     let params = {
                         event : "moving",
                         clientId : clientId,
+                        h : data.h,
+                        v : data.v,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
