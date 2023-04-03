@@ -24,17 +24,19 @@ const PartyMatchSocket = (server) => {
         
     const RoomStores = [];
     function getRoom(len, roomId = null) {
-        // console.log("RoomStores before -------------  ", RoomStores)
+        console.log("RoomStores before -------------  ", RoomStores)
         let roomRan = otpGenerator.generate(6, {
             // digits: true,
             upperCaseAlphabets: false,
             specialChars: false,
         });
+        let isHost = "0";
         if(RoomStores.length == 0){
             RoomStores.push({
                 room : roomId ? roomId : roomRan,
                 numPlayer : 1
             })
+            isHost = "1";
         } else {
             let lastRoom = RoomStores[RoomStores.length - 1];
             if(lastRoom.numPlayer < len){
@@ -44,19 +46,24 @@ const PartyMatchSocket = (server) => {
                     room : roomId ? roomId : roomRan,
                     numPlayer : 1
                 })
+                isHost = "1";
             }
         }
         console.log("RoomStores afterrrr -------------  ", RoomStores)
-        return RoomStores[RoomStores.length - 1].room;
+        let response = {
+            host :  isHost,
+            room :  RoomStores[RoomStores.length - 1].room
+        }
+        return response;
       }
     
     const rooms = {};
     var Player = require('./PlayerPartyMatch.js');
     
     function parseVector3(str) {
-        console.log("str ============  " , str);
+        // console.log("str ============  " , str);
         var sliceString = str.slice(1,str.length - 1);
-        console.log("sliceString ============  " , sliceString);
+        // console.log("sliceString ============  " , sliceString);
         let arrPos = sliceString.split(',');
         // arrPos.forEach(element => {
         //     element.replace(" ", "");
@@ -77,7 +84,7 @@ const PartyMatchSocket = (server) => {
           console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
           return;
         }
-    
+        var roomId = "";
         // remove echo-protocol
         var connection = request.accept("", request.origin);
         // var connection = request.accept( request.origin);
@@ -90,9 +97,11 @@ const PartyMatchSocket = (server) => {
         const clientId = request.key;
         console.log("clientId ===================   " ,clientId);
         const leave = room => {
-            console.log("_room leave leave ===========  " , room)
+            
             // not present: do nothing
-            if(! rooms[room][clientId]) return;
+            if(!rooms[room] || !rooms[room][clientId]) return;
+            console.log("_room RoomStores leave ===========  " , RoomStores)
+
             let checkNewHost = "";
             // if the one exiting is the last one, destroy the room
             if(Object.keys(rooms[room]).length === 1){
@@ -106,7 +115,7 @@ const PartyMatchSocket = (server) => {
                 //     }
                 // });
     
-    
+                RoomStores.splice(0, 1);
                 delete rooms[room];
             }
             // otherwise simply leave the room
@@ -118,13 +127,22 @@ const PartyMatchSocket = (server) => {
                         if(sock["player"]["id"] != clientId && !isFindNewHost){
                             rooms[room][sock["player"]["id"]]["player"]["isHost"] = "1";
                             checkNewHost = sock["player"]["id"];
-                            isFindNewHost = true;
+                             isFindNewHost= true;
                             console.log(" new host ------  " , sock["player"]);
                         }
                     });
                 }
     
+
                 delete rooms[room][clientId];
+                if(RoomStores[room]){
+                    RoomStores[room].numPlayer -= 1;
+                    if(RoomStores[room].numPlayer == 0){
+                        let indexRoom = RoomStores.indexOf(RoomStores[room]);
+                        RoomStores.slice(indexRoom,1);
+                    }
+                }
+
             }
             if(rooms[room]) {
     
@@ -139,7 +157,7 @@ const PartyMatchSocket = (server) => {
                     sock.sendBytes(buffer);
                 });
             }
-    
+            console.log("_room RoomStores aftter ===========  " , RoomStores)
         };
     
     
@@ -152,51 +170,54 @@ const PartyMatchSocket = (server) => {
                 // connection.sendBytes(message.binaryData);
     
                 var data = JSON.parse(message.binaryData);
-                console.log('Received Message binary :  ' +  message.binaryData);
+                // console.log('Received Message binary :  ' +  message.binaryData);
                 const { meta, room } = data;
     
                 if(meta === "requestRoom") {
                     console.log("playerLen =========== binary  " , parseInt(data.playerLen))
     
-                    let host = data['host'];
-                    // let _room = getRoom(parseInt(data.playerLen), room);
+                    let res = getRoom(8);
+                    let _host = res.host;
+                    let _room = res.room;
+                    roomId = _room;
+                    console.log(" res ---- room  " ,res )
                     let canJoin = true;
-                    let _room;
-                    if(host == "1"){
-                        _room = room;
-                    } else {
-                        _room = room;
-                        if(!rooms[_room]){
-                            let params = {
-                                event : "failJoinRoom",
-                                clientId : clientId,
-                                room : _room,
-                                message : "Room id : " + _room + " is not availiable! Please try again.",
-                            }
-                            let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                            connection.sendBytes(buffer);
-                            canJoin = false;
-                            return;
-                        }
-                        else {
-                            Object.entries(rooms[_room]).forEach(([, sock]) => {
+                    // let _room;
+                    // if(host == "1"){
+                    //     _room = room;
+                    // } else {
+                    //     _room = room;
+                    //     if(!rooms[_room]){
+                    //         let params = {
+                    //             event : "failJoinRoom",
+                    //             clientId : clientId,
+                    //             room : _room,
+                    //             message : "Room id : " + _room + " is not availiable! Please try again.",
+                    //         }
+                    //         let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    //         connection.sendBytes(buffer);
+                    //         canJoin = false;
+                    //         return;
+                    //     }
+                    //     else {
+                    //         Object.entries(rooms[_room]).forEach(([, sock]) => {
                                 
-                                if(sock.player.isStarted == "1"){
+                    //             if(sock.player.isStarted == "1"){
                                     
-                                    let params = {
-                                        event : "failJoinRoom",
-                                        clientId : clientId,
-                                        room : _room,
-                                        message : "Room id : " + _room + " is not availiable! Please try again.",
-                                    }
-                                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                                    connection.sendBytes(buffer);
-                                    canJoin = false;
-                                    return;
-                                } 
-                            });
-                        }
-                    }
+                    //                 let params = {
+                    //                     event : "failJoinRoom",
+                    //                     clientId : clientId,
+                    //                     room : _room,
+                    //                     message : "Room id : " + _room + " is not availiable! Please try again.",
+                    //                 }
+                    //                 let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    //                 connection.sendBytes(buffer);
+                    //                 canJoin = false;
+                    //                 return;
+                    //             } 
+                    //         });
+                    //     }
+                    // }
                     
                     if(canJoin)
                     {
@@ -204,6 +225,7 @@ const PartyMatchSocket = (server) => {
                             event : "roomDetected",
                             clientId : clientId,
                             room : _room,
+                            host : _host,
                         }
                         // let bufferArr = str2ab(JSON.stringify(params));
                         let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -231,7 +253,7 @@ const PartyMatchSocket = (server) => {
                     player.userAppId = data.userAppId;
                     player.avatar = data.avatar;
                     player.room = room;
-                    player.isSpectator = data.isSpectator;
+                    player.isSpectator = "0";
                     player.gender = data.gender;
 
                     console.log( "  new player created  ----------- " , player)
@@ -289,7 +311,16 @@ const PartyMatchSocket = (server) => {
                     }
                     if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
     
-                    var player = rooms[room][clientId]["player"];
+                    var player = new Player();
+                    player.id = clientId;
+                    // player.playerName = "Player " + Object.keys(rooms[room]).length;
+                    player.playerName = data.playerName;
+                    player.userAppId = data.userAppId;
+                    player.avatar = data.avatar;
+                    player.room = room;
+                    player.isSpectator = data.isSpectator;
+                    player.gender = data.gender;
+                    player.characterIndex = data.characterIndex;
                     let _pos = parseVector3(data.pos);
                     console.log("pos :   " , _pos);
                     player.position = _pos;
@@ -326,19 +357,15 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "startGame") {
+                else if(meta === "roundAlready") {
     
-                    console.log("startGame  data ===========  " , data)
-                    let maxTime = parseFloat(data.maxTime);
+                    console.log("roundAlready  data ===========  " , data)
                     let params = {
-                        event : "startGame",
+                        event : "roundAlready",
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    console.log("startGame  buffer========  " , buffer)
-                    // console.log("startGame  rooms[room]========  " , rooms[room])
                     Object.entries(rooms[room]).forEach(([, sock]) => {
-                        rooms[room][sock["player"]["id"]]["player"]["timer"] = maxTime;
                        sock.sendBytes(buffer)
                     });
                 }
@@ -363,12 +390,16 @@ const PartyMatchSocket = (server) => {
                 }
                 else if(meta === "moving") {
     
-                    console.log("moving moving data ===========  " , data)
+                    // console.log("moving moving data ===========  " , data)
+                    // let _pos = parseVector3(data.pos);
+                    // rooms[room][clientId]["player"]["position"] = _pos;
+                    // console.log("pos :   " , _pos);
                     let params = {
                         event : "moving",
                         clientId : clientId,
                         h : data.h,
-                        v : data.v,
+                        v : data.v
+                        // pos : _pos
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
@@ -393,25 +424,33 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "stopMove") {
-                    console.log("stopMove stopMove data ===========  " , data)
+                else if(meta === "cubeFall") {
+                    console.log("cubeFall  data ===========  " , data)
                     let params = {
-                        event : "stopMove",
+                        event : "cubeFall",
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === "headTurn") {
-                    console.log("headTurn headTurn ===========  " , data)
-                    const rnd = Math.random() * 3 + 1;
+                else if(meta === "cubeReset") {
+                    console.log("cubeReset  data ===========  " , data)
                     let params = {
-                        event : "headTurn",
+                        event : "cubeReset",
                         clientId : clientId,
-                        speedHeadTurn : rnd,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                }
+                else if(meta === "roundPass") {
+                    rooms[room][clientId]["player"]["round"] = parseInt(data.round);
+                    // let params = {
+                    //     event : "roundPass",
+                    //     clientId : clientId,
+                    //     roundPass :  parseInt(data.round)
+                    // }
+                    // let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    // Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
                 else if(meta === "playerDie") {
                     console.log("playerDie data ========================= " + data);
@@ -427,7 +466,7 @@ const PartyMatchSocket = (server) => {
                 }
                 else if(meta === "playerWin") {
                     rooms[room][clientId]["player"]["playerStatus"] = "win";
-                    rooms[room][clientId]["player"]["timeWin"] = parseInt(data.timeWin);
+                    rooms[room][clientId]["player"]["roundPass"] = parseInt(data.roundPass);
                     let params = {
                         event : "playerWin",
                         clientId : clientId,
@@ -468,7 +507,9 @@ const PartyMatchSocket = (server) => {
         connection.on('close', function(reasonCode, description) {
             console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
             // for each room, remove the closed socket
-            Object.keys(rooms).forEach(room => leave(room));
+            // Object.keys(rooms).forEach(room => leave(room));
+            console.log( " roomId ==============  " , roomId);
+            leave(roomId);
         });
     });
 }

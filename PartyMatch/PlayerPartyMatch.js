@@ -11,8 +11,8 @@ module.exports = class Player {
         this.isStarted = "0";
         this.isSpectator = "0";
         this.playerStatus = "die";
-        this.timer = 0;
-        this.timeWin = 0;
+        this.characterIndex = 0;
+        this.round = 0;
     }
     
 }
