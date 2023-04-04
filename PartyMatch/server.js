@@ -84,7 +84,7 @@ const PartyMatchSocket = (server) => {
           console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
           return;
         }
-        var roomId = "";
+
         // remove echo-protocol
         var connection = request.accept("", request.origin);
         // var connection = request.accept( request.origin);
@@ -97,25 +97,12 @@ const PartyMatchSocket = (server) => {
         const clientId = request.key;
         console.log("clientId ===================   " ,clientId);
         const leave = room => {
-            
+            console.log("_room leave leave ===========  " , room)
             // not present: do nothing
-            if(!rooms[room] || !rooms[room][clientId]) return;
-            console.log("_room RoomStores leave ===========  " , RoomStores)
-
+            if(! rooms[room][clientId]) return;
             let checkNewHost = "";
             // if the one exiting is the last one, destroy the room
             if(Object.keys(rooms[room]).length === 1){
-                // delete room name
-                // RoomStores.forEach(roomPlayer => {
-                //     if(roomPlayer.room == room){
-                //         var index = RoomStores.indexOf(roomPlayer);
-                //         if (index > -1) {
-                //             RoomStores.splice(index, 1);
-                //         }
-                //     }
-                // });
-    
-                RoomStores.splice(0, 1);
                 delete rooms[room];
             }
             // otherwise simply leave the room
@@ -127,22 +114,13 @@ const PartyMatchSocket = (server) => {
                         if(sock["player"]["id"] != clientId && !isFindNewHost){
                             rooms[room][sock["player"]["id"]]["player"]["isHost"] = "1";
                             checkNewHost = sock["player"]["id"];
-                             isFindNewHost= true;
+                            isFindNewHost = true;
                             console.log(" new host ------  " , sock["player"]);
                         }
                     });
                 }
     
-
                 delete rooms[room][clientId];
-                if(RoomStores[room]){
-                    RoomStores[room].numPlayer -= 1;
-                    if(RoomStores[room].numPlayer == 0){
-                        let indexRoom = RoomStores.indexOf(RoomStores[room]);
-                        RoomStores.slice(indexRoom,1);
-                    }
-                }
-
             }
             if(rooms[room]) {
     
@@ -157,7 +135,7 @@ const PartyMatchSocket = (server) => {
                     sock.sendBytes(buffer);
                 });
             }
-            console.log("_room RoomStores aftter ===========  " , RoomStores)
+    
         };
     
     
@@ -531,9 +509,9 @@ const PartyMatchSocket = (server) => {
         connection.on('close', function(reasonCode, description) {
             console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
             // for each room, remove the closed socket
-            // Object.keys(rooms).forEach(room => leave(room));
-            console.log( " roomId ==============  " , roomId);
-            leave(roomId);
+            Object.keys(rooms).forEach(room => leave(room));
+            // console.log( " roomId ==============  " , roomId);
+            // leave(roomId);
         });
     });
 }
