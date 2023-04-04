@@ -176,48 +176,46 @@ const PartyMatchSocket = (server) => {
                 if(meta === "requestRoom") {
                     console.log("playerLen =========== binary  " , parseInt(data.playerLen))
     
-                    let res = getRoom(8);
-                    let _host = res.host;
-                    let _room = res.room;
-                    roomId = _room;
-                    console.log(" res ---- room  " ,res )
+                    let host = data['host'];
+                    // let _room = getRoom(parseInt(data.playerLen), room);
                     let canJoin = true;
-                    // let _room;
-                    // if(host == "1"){
-                    //     _room = room;
-                    // } else {
-                    //     _room = room;
-                    //     if(!rooms[_room]){
-                    //         let params = {
-                    //             event : "failJoinRoom",
-                    //             clientId : clientId,
-                    //             room : _room,
-                    //             message : "Room id : " + _room + " is not availiable! Please try again.",
-                    //         }
-                    //         let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    //         connection.sendBytes(buffer);
-                    //         canJoin = false;
-                    //         return;
-                    //     }
-                    //     else {
-                    //         Object.entries(rooms[_room]).forEach(([, sock]) => {
+                    let _room;
+                    if(host == "1"){
+                        _room = room;
+                    } else {
+                        // _room = room.substring(0,room.length-1);
+                        _room = room;
+                        if(!rooms[_room]){
+                            let params = {
+                                event : "failJoinRoom",
+                                clientId : clientId,
+                                room : _room,
+                                message : "Room id : " + _room + " is not availiable! Please try again.",
+                            }
+                            let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                            connection.sendBytes(buffer);
+                            canJoin = false;
+                            return;
+                        }
+                        else {
+                            Object.entries(rooms[_room]).forEach(([, sock]) => {
                                 
-                    //             if(sock.player.isStarted == "1"){
+                                if(sock.player.isStarted == "1"){
                                     
-                    //                 let params = {
-                    //                     event : "failJoinRoom",
-                    //                     clientId : clientId,
-                    //                     room : _room,
-                    //                     message : "Room id : " + _room + " is not availiable! Please try again.",
-                    //                 }
-                    //                 let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    //                 connection.sendBytes(buffer);
-                    //                 canJoin = false;
-                    //                 return;
-                    //             } 
-                    //         });
-                    //     }
-                    // }
+                                    let params = {
+                                        event : "failJoinRoom",
+                                        clientId : clientId,
+                                        room : _room,
+                                        message : "Room id : " + _room + " is not availiable! Please try again.",
+                                    }
+                                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                                    connection.sendBytes(buffer);
+                                    canJoin = false;
+                                    return;
+                                } 
+                            });
+                        }
+                    }
                     
                     if(canJoin)
                     {
@@ -225,7 +223,6 @@ const PartyMatchSocket = (server) => {
                             event : "roomDetected",
                             clientId : clientId,
                             room : _room,
-                            host : _host,
                         }
                         // let bufferArr = str2ab(JSON.stringify(params));
                         let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -235,8 +232,6 @@ const PartyMatchSocket = (server) => {
                     
                 }
                 else if(meta === "joinLobby") {
-    
-                    // console.log(' rooms[room] before ========  ' , rooms);
     
                     if(!rooms[room]){
                         rooms[room] = {}; // create the room
@@ -253,10 +248,15 @@ const PartyMatchSocket = (server) => {
                     player.userAppId = data.userAppId;
                     player.avatar = data.avatar;
                     player.room = room;
-                    player.isSpectator = "0";
+                    player.isSpectator = data.isSpectator;
                     player.gender = data.gender;
-
+                    // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
+                    // console.log( "  ranGender ----------- " , ranGender)
+                    // player.gender = ranGender;
                     console.log( "  new player created  ----------- " , player)
+                    // let _pos = parseVector3(data.pos);
+                    // console.log("pos :   " , _pos);
+                    // player.position = _pos;
     
                     rooms[room][clientId]["player"] = player;// save player in room array
                     let players = [];
@@ -310,23 +310,15 @@ const PartyMatchSocket = (server) => {
                         rooms[room] = {}; // create the room
                     }
                     if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
-    
-                    var player = new Player();
-                    player.id = clientId;
-                    // player.playerName = "Player " + Object.keys(rooms[room]).length;
-                    player.playerName = data.playerName;
-                    player.userAppId = data.userAppId;
-                    player.avatar = data.avatar;
-                    player.room = room;
-                    player.isSpectator = data.isSpectator;
-                    player.gender = data.gender;
-                    player.characterIndex = data.characterIndex;
+
+                    var player = rooms[room][clientId]["player"];
                     let _pos = parseVector3(data.pos);
                     console.log("pos :   " , _pos);
                     player.position = _pos;
                     player.isStarted = "1";
                     console.log( "  new player created  ----------- " , player)
-    
+                    player.characterIndex = data.characterIndex;
+                   
                     rooms[room][clientId]["player"] = player;// save player in room array
                     let players = [];
                     Object.entries(rooms[room]).forEach(([, sock]) => {
@@ -356,6 +348,21 @@ const PartyMatchSocket = (server) => {
                         sock.sendBytes(buffer);
                     });
     
+                }
+                else if(meta === "startGame") {
+    
+                    console.log("startGame  data ===========  " , data)
+                    let maxTime = parseFloat(data.maxTime);
+                    let params = {
+                        event : "startGame",
+                        clientId : clientId,
+                    }
+                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    console.log("startGame  buffer========  " , buffer)
+                    // console.log("startGame  rooms[room]========  " , rooms[room])
+                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                       sock.sendBytes(buffer)
+                    });
                 }
                 else if(meta === "roundAlready") {
     
