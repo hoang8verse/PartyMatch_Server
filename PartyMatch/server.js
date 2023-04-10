@@ -467,13 +467,14 @@ const PartyMatchSocket = (server) => {
                 }
                 else if(meta === "roundPass") {
                     rooms[room][clientId]["player"]["round"] = parseInt(data.round);
-                    // let params = {
-                    //     event : "roundPass",
-                    //     clientId : clientId,
-                    //     roundPass :  parseInt(data.round)
-                    // }
-                    // let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    // Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    let params = {
+                        event : "roundPass",
+                        clientId : clientId,
+                        roundPass :  parseInt(data.round),
+                        countPlayer :  Object.keys(rooms[room]).length
+                    }
+                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
                 else if(meta === "playerDie") {
                     console.log("playerDie data ========================= " + data);
