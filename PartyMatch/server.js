@@ -375,13 +375,15 @@ const PartyMatchSocket = (server) => {
                 }
                 else if(meta === "moving") {
     
-                    // console.log("moving moving data ===========  " , data)
+                    console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.pos);
+                    let _posVelocity = parseVector3(data.velocity);
                     rooms[room][clientId]["player"]["position"] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
                         event : "moving",
                         clientId : clientId,
+                        velocity : _posVelocity,
                         h : data.h,
                         v : data.v
                         // pos : _pos
@@ -401,6 +403,25 @@ const PartyMatchSocket = (server) => {
                     let params = {
                         event : "hitEnemy",
                         clientId : clientId,
+                        hitEnemyId : data.enemyId,
+                        hitPos : _pos,
+                    }
+                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                       sock.sendBytes(buffer)
+                    });
+    
+                }
+                else if(meta === "stunned") {
+    
+                    // console.log("moving moving data ===========  " , data)
+                    let _pos = parseVector3(data.hitPos);
+                    // rooms[room][clientId]["player"]["position"] = _pos;
+                    // console.log("pos :   " , _pos);
+                    let params = {
+                        event : "stunned",
+                        clientId : clientId,
+                        stunnedByEnemyId : data.enemyId,
                         hitPos : _pos,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
