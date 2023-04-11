@@ -9,6 +9,7 @@ module.exports = class Player {
         this.position = [];
         this.isHost = "";
         this.isStarted = "0";
+        this.startIndex = -1;
         this.isSpectator = "0";
         this.playerStatus = "die";
         this.characterIndex = 0;

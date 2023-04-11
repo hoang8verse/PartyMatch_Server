@@ -137,7 +137,29 @@ const PartyMatchSocket = (server) => {
             }
     
         };
-    
+        function CheckIndexAvaible (randIndex, room){
+            let index = false;
+            Object.entries(rooms[room]).forEach(([, sock]) => {
+                let _startIndex =  parseInt(sock["player"]["startIndex"]); 
+                if(randIndex !=  _startIndex){
+                    index = true;
+                }
+            });
+
+            return index;
+        }
+        function GetRandomIndexPos (len, room){
+            let index = -1;
+            let condition = false;
+            while (!condition) {
+                let randIndex = Math.floor(Math.random() * len);
+                if(CheckIndexAvaible(randIndex, room)){
+                    index = randIndex;
+                    condition =  true;
+                }
+            }
+            return index;
+        }
     
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
@@ -338,6 +360,23 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     console.log("startGame  buffer========  " , buffer)
                     // console.log("startGame  rooms[room]========  " , rooms[room])
+                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                       sock.sendBytes(buffer)
+                    });
+                }
+                else if(meta === "checkPosition") {
+    
+                    console.log("checkPosition  data ===========  " , data)
+                    let ranLength = parseInt(data.ranLength); 
+                    let ranIndex = GetRandomIndexPos(ranLength, room);
+                    rooms[room][clientId]["player"]["startIndex"] = ranIndex;
+                    console.log(" checkPosition ranIndex  ===========  " , ranIndex)
+                    let params = {
+                        event : "positionPlayer",
+                        clientId : clientId,
+                        ranIndex : ranIndex
+                    }
+                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
