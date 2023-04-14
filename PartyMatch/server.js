@@ -151,13 +151,15 @@ const PartyMatchSocket = (server) => {
         function GetRandomIndexPos (len, room){
             let index = -1;
             let condition = false;
-            while (!condition) {
+            do {
                 let randIndex = Math.floor(Math.random() * len);
                 if(CheckIndexAvaible(randIndex, room)){
                     index = randIndex;
                     condition =  true;
+                } else {
+                    condition = false;
                 }
-            }
+            } while (!condition);
             return index;
         }
     
@@ -462,6 +464,23 @@ const PartyMatchSocket = (server) => {
                         clientId : clientId,
                         stunnedByEnemyId : data.enemyId,
                         hitPos : _pos,
+                    }
+                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                       sock.sendBytes(buffer)
+                    });
+    
+                }
+                else if(meta === "updatePos") {
+    
+                    // console.log("moving moving data ===========  " , data)
+                    let _pos = parseVector3(data.pos);
+                    // rooms[room][clientId]["player"]["position"] = _pos;
+                    // console.log("pos :   " , _pos);
+                    let params = {
+                        event : "updatePos",
+                        clientId : clientId,
+                        pos : _pos,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
