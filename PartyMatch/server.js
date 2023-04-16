@@ -56,6 +56,20 @@ const PartyMatchSocket = (server) => {
         }
         return response;
       }
+
+      function randomIntArrayUnique(num, max) {
+        let result = [];
+        for (let i = 0; i < num; i++) {
+          let randomNum = Math.floor(Math.random() * (max));
+          while (result.includes(randomNum)) {
+            randomNum = Math.floor(Math.random() * (max));
+          }
+          result.push(randomNum);
+        }
+        console.log("result random array ===========  ", result);
+        return result;
+      }
+    //   randomIntArrayUnique(16, 16)
     
     const rooms = {};
     var Player = require('./PlayerPartyMatch.js');
