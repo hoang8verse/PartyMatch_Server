@@ -213,6 +213,19 @@ const PartyMatchSocket = (server) => {
                             canJoin = false;
                             return;
                         }
+                        // check max 8 user in a room
+                        else if(Object.keys(rooms[room]).length >= 8){
+                            let params = {
+                                event : "failJoinRoom",
+                                clientId : clientId,
+                                room : _room,
+                                message : "Room id : " + _room + " is not availiable! Please try again.",
+                            }
+                            let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                            connection.sendBytes(buffer);
+                            canJoin = false;
+                            return;
+                        }
                         else {
                             Object.entries(rooms[_room]).forEach(([, sock]) => {
                                 
