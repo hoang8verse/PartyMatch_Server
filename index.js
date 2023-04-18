@@ -47,9 +47,9 @@ const serverSSL = https.createServer(options, function(request, response) {
 });
 
 
-server.listen(port, function() {
-    console.log((new Date()) + ' Server is listening on port ' + port);
-});
+// server.listen(port, function() {
+//     console.log((new Date()) + ' Server is listening on port ' + port);
+// });
 serverSSL.listen(port, function() {
   console.log((new Date()) + ' Server is listening on port ' + port);
 });
