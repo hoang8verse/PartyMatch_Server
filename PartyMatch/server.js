@@ -56,6 +56,20 @@ const PartyMatchSocket = (server) => {
         }
         return response;
       }
+
+      function randomIntArrayUnique(num, max) {
+        let result = [];
+        for (let i = 0; i < num; i++) {
+          let randomNum = Math.floor(Math.random() * (max));
+          while (result.includes(randomNum)) {
+            randomNum = Math.floor(Math.random() * (max));
+          }
+          result.push(randomNum);
+        }
+        console.log("result random array ===========  ", result);
+        return result;
+      }
+    //   randomIntArrayUnique(16, 16)
     
     const rooms = {};
     var Player = require('./PlayerPartyMatch.js');
@@ -188,6 +202,19 @@ const PartyMatchSocket = (server) => {
                         // _room = room.substring(0,room.length-1);
                         _room = room;
                         if(!rooms[_room]){
+                            let params = {
+                                event : "failJoinRoom",
+                                clientId : clientId,
+                                room : _room,
+                                message : "Room id : " + _room + " is not availiable! Please try again.",
+                            }
+                            let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                            connection.sendBytes(buffer);
+                            canJoin = false;
+                            return;
+                        }
+                        // check max 8 user in a room
+                        else if(Object.keys(rooms[room]).length >= 8){
                             let params = {
                                 event : "failJoinRoom",
                                 clientId : clientId,
