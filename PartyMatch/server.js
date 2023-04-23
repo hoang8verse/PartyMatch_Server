@@ -72,6 +72,7 @@ const PartyMatchSocket = (server) => {
     //   randomIntArrayUnique(16, 16)
     
     const rooms = {};
+    const roomsStorePos = {};
     var Player = require('./PlayerPartyMatch.js');
     
     function parseVector3(str) {
@@ -79,11 +80,18 @@ const PartyMatchSocket = (server) => {
         var sliceString = str.slice(1,str.length - 1);
         // console.log("sliceString ============  " , sliceString);
         let arrPos = sliceString.split(',');
-        // arrPos.forEach(element => {
-        //     element.replace(" ", "");
-        //     parseFloat(element);
-        //     console.log("element ============  " , element);
-        // });
+        let strReturn = arrPos;
+        for (let index = 0; index < arrPos.length; index++) {
+            strReturn[index] = parseFloat(arrPos[index]);
+        }
+        
+        return strReturn;
+      }
+      function parseQuaternion(str) {
+        // console.log("str ============  " , str);
+        var sliceString = str.slice(1,str.length - 1);
+        // console.log("sliceString ============  " , sliceString);
+        let arrPos = sliceString.split(',');
         let strReturn = arrPos;
         for (let index = 0; index < arrPos.length; index++) {
             strReturn[index] = parseFloat(arrPos[index]);
@@ -118,6 +126,7 @@ const PartyMatchSocket = (server) => {
             // if the one exiting is the last one, destroy the room
             if(Object.keys(rooms[room]).length === 1){
                 delete rooms[room];
+                delete roomsStorePos[room];
             }
             // otherwise simply leave the room
             else {
@@ -198,6 +207,7 @@ const PartyMatchSocket = (server) => {
                     let _room;
                     if(host == "1"){
                         _room = room;
+                        roomsStorePos[room] = randomIntArrayUnique(16, 16);
                     } else {
                         // _room = room.substring(0,room.length-1);
                         _room = room;
@@ -369,6 +379,7 @@ const PartyMatchSocket = (server) => {
                         players : players,
                         isHost : player.isHost,
                         isSpectator : player.isSpectator,
+                        roomPos : roomsStorePos[room],
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
@@ -443,7 +454,7 @@ const PartyMatchSocket = (server) => {
                 }
                 else if(meta === "moving") {
     
-                    console.log("moving moving data ===========  " , data)
+                    // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.pos);
                     let _posVelocity = parseVector3(data.velocity);
                     rooms[room][clientId]["player"]["position"] = _pos;
@@ -500,14 +511,16 @@ const PartyMatchSocket = (server) => {
                 }
                 else if(meta === "updatePos") {
     
-                    // console.log("moving moving data ===========  " , data)
+                    console.log("updatePos     data ===========  " , data)
                     let _pos = parseVector3(data.pos);
+                    let _rot = parseQuaternion(data.rot);
                     // rooms[room][clientId]["player"]["position"] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
                         event : "updatePos",
                         clientId : clientId,
                         pos : _pos,
+                        rot : _rot,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
