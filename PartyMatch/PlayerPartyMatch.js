@@ -14,6 +14,7 @@ module.exports = class Player {
         this.playerStatus = "die";
         this.characterIndex = 0;
         this.round = 0;
+        this.indexPlayer = 0;
     }
     
 }

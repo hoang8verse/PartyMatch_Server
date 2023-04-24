@@ -289,6 +289,7 @@ const PartyMatchSocket = (server) => {
                     player.room = room;
                     player.isSpectator = data.isSpectator;
                     player.gender = data.gender;
+                    player.indexPlayer =  Object.keys(rooms[room]).length - 1;
                     // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
                     // console.log( "  ranGender ----------- " , ranGender)
                     // player.gender = ranGender;
@@ -378,7 +379,9 @@ const PartyMatchSocket = (server) => {
                         avatar : player.avatar,
                         players : players,
                         isHost : player.isHost,
+                        gender : player.gender,
                         isSpectator : player.isSpectator,
+                        indexPlayer : player.indexPlayer,
                         roomPos : roomsStorePos[room],
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
