@@ -71,7 +71,7 @@ const PartyMatchSocket = (server) => {
       }
     //   randomIntArrayUnique(16, 16)
     
-    const countPlayerInRoom = {};
+    const countPlayers = {};
     const rooms = {};
     const roomsStorePos = {};
     var Player = require('./PlayerPartyMatch.js');
@@ -128,7 +128,7 @@ const PartyMatchSocket = (server) => {
             if(Object.keys(rooms[room]).length === 1){
                 delete rooms[room];
                 delete roomsStorePos[room];
-                delete countPlayerInRoom[room];
+                delete countPlayers[room];
             }
             // otherwise simply leave the room
             else {
@@ -143,8 +143,14 @@ const PartyMatchSocket = (server) => {
                             console.log(" new host ------  " , sock["player"]);
                         }
                     });
-                }
-    
+                }				
+				
+				if(!countPlayers[room] && !countPlayers[room]["alivePlayer"] && countPlayers[room]["alivePlayer"].length > 0){
+					var leavePlayerIndex = rooms[room][clientId]["player"]["indexPlayer"];
+					console.log("_room leave leave =========== indexPlayer:" , leavePlayerIndex);
+					console.log("_room leave leave =========== alivePlayer:" , countPlayers[room]["alivePlayer"]);
+					countPlayers[room]["alivePlayer"] = countPlayers[room]["alivePlayer"].filter((value) => value != leavePlayerIndex);
+				}
                 delete rooms[room][clientId];
             }
             if(rooms[room]) {
@@ -155,6 +161,7 @@ const PartyMatchSocket = (server) => {
                         event : "playerLeaveRoom",
                         clientId : clientId,
                         newHost : checkNewHost,
+						alivePlayers : countPlayers[room]["alivePlayer"],
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     sock.sendBytes(buffer);
@@ -276,9 +283,9 @@ const PartyMatchSocket = (server) => {
     
                     if(!rooms[room]){
                         rooms[room] = {}; // create the room
-						countPlayerInRoom [room] = {};
-						countPlayerInRoom [room]["countPlayer"] = 0;
-						countPlayerInRoom [room]["alivePlayer"] = [];
+						countPlayers [room] = {};
+						countPlayers [room]["countPlayer"] = 0;
+						countPlayers [room]["alivePlayer"] = [];
                         // console.log(" created new aaaaaaaaaaaa room ===========  " , rooms)
                     }
                     if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
@@ -293,8 +300,8 @@ const PartyMatchSocket = (server) => {
                     player.room = room;
                     player.isSpectator = data.isSpectator;
                     player.gender = data.gender;
-                    player.indexPlayer =  countPlayerInRoom [room]["countPlayer"];
-                    countPlayerInRoom[room]["countPlayer"] = player.indexPlayer + 1;
+                    player.indexPlayer =  countPlayers [room]["countPlayer"];
+                    countPlayers[room]["countPlayer"] = player.indexPlayer + 1;
                     // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
                     // console.log( "  ranGender ----------- " , ranGender)
                     // player.gender = ranGender;
@@ -367,7 +374,7 @@ const PartyMatchSocket = (server) => {
                     rooms[room][clientId]["player"] = player;// save player in room array
                
                     // console.log( "  sock ----------- " , sock.player)
-                    countPlayerInRoom[room]["alivePlayer"].push(player.indexPlayer);
+                    countPlayers[room]["alivePlayer"].push(player.indexPlayer);
                     
                     player.isHost = data.isHost;
                     // if(players.length == 1){
@@ -381,7 +388,7 @@ const PartyMatchSocket = (server) => {
                         playerName : player.playerName,
                         userAppId : player.userAppId,
                         avatar : player.avatar,
-                        alivePlayers : countPlayerInRoom[room]["alivePlayer"],
+                        alivePlayers : countPlayers[room]["alivePlayer"],
                         isHost : player.isHost,
                         gender : player.gender,
                         isSpectator : player.isSpectator,
