@@ -71,6 +71,7 @@ const PartyMatchSocket = (server) => {
       }
     //   randomIntArrayUnique(16, 16)
     
+    const countPlayerInRoom = {};
     const rooms = {};
     const roomsStorePos = {};
     var Player = require('./PlayerPartyMatch.js');
@@ -127,6 +128,7 @@ const PartyMatchSocket = (server) => {
             if(Object.keys(rooms[room]).length === 1){
                 delete rooms[room];
                 delete roomsStorePos[room];
+                delete countPlayerInRoom[room];
             }
             // otherwise simply leave the room
             else {
@@ -274,8 +276,9 @@ const PartyMatchSocket = (server) => {
     
                     if(!rooms[room]){
                         rooms[room] = {}; // create the room
+						countPlayerInRoom [room] = {};
+						countPlayerInRoom [room]["countPlayer"] = 0;
                         // console.log(" created new aaaaaaaaaaaa room ===========  " , rooms)
-    
                     }
                     if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
                     // console.log(' rooms[room] 111111111111 ========  ' , rooms);
@@ -289,7 +292,8 @@ const PartyMatchSocket = (server) => {
                     player.room = room;
                     player.isSpectator = data.isSpectator;
                     player.gender = data.gender;
-                    player.indexPlayer =  Object.keys(rooms[room]).length - 1;
+                    player.indexPlayer =  countPlayerInRoom [room]["countPlayer"];
+                    countPlayerInRoom[room]["countPlayer"] = player.indexPlayer + 1;
                     // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
                     // console.log( "  ranGender ----------- " , ranGender)
                     // player.gender = ranGender;
