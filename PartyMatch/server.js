@@ -144,13 +144,18 @@ const PartyMatchSocket = (server) => {
                         }
                     });
                 }				
+				var leavePlayerIndex = rooms[room][clientId]["player"]["indexPlayer"];				
+								
+				console.log("_room leave leave =========== indexPlayer:" , leavePlayerIndex);
+				console.log("_room leave leave =========== alivePlayer:" , countPlayers[room]["alivePlayer"]);
+				countPlayers[room]["alivePlayer"] = countPlayers[room]["alivePlayer"].filter((value) => value != leavePlayerIndex);
+				console.log("==> updated _room leave leave =========== alivePlayer:" , countPlayers[room]["alivePlayer"]);
+							
+				console.log("_room leave leave =========== indexPlayer:" , leavePlayerIndex);
+				console.log("_room leave leave =========== aliveLobbyPlayer:" , countPlayers[room]["aliveLobbyPlayer"]);
+				countPlayers[room]["aliveLobbyPlayer"] = countPlayers[room]["aliveLobbyPlayer"].filter((value) => value != leavePlayerIndex);
+				console.log("==> updated _room leave leave =========== aliveLobbyPlayer:" , countPlayers[room]["aliveLobbyPlayer"]);
 				
-				if(!countPlayers[room] && !countPlayers[room]["alivePlayer"] && countPlayers[room]["alivePlayer"].length > 0){
-					var leavePlayerIndex = rooms[room][clientId]["player"]["indexPlayer"];
-					console.log("_room leave leave =========== indexPlayer:" , leavePlayerIndex);
-					console.log("_room leave leave =========== alivePlayer:" , countPlayers[room]["alivePlayer"]);
-					countPlayers[room]["alivePlayer"] = countPlayers[room]["alivePlayer"].filter((value) => value != leavePlayerIndex);
-				}
                 delete rooms[room][clientId];
             }
             if(rooms[room]) {
@@ -161,7 +166,8 @@ const PartyMatchSocket = (server) => {
                         event : "playerLeaveRoom",
                         clientId : clientId,
                         newHost : checkNewHost,
-						alivePlayers : countPlayers[room]["alivePlayer"],
+						"alivePlayers" : countPlayers[room]["alivePlayer"],
+						"aliveLobbyPlayer" : countPlayers[room]["aliveLobbyPlayer"],
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     sock.sendBytes(buffer);
@@ -286,6 +292,7 @@ const PartyMatchSocket = (server) => {
 						countPlayers [room] = {};
 						countPlayers [room]["countPlayer"] = 0;
 						countPlayers [room]["alivePlayer"] = [];
+						countPlayers [room]["aliveLobbyPlayer"] = [];
                         // console.log(" created new aaaaaaaaaaaa room ===========  " , rooms)
                     }
                     if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
@@ -302,6 +309,7 @@ const PartyMatchSocket = (server) => {
                     player.gender = data.gender;
                     player.indexPlayer =  countPlayers [room]["countPlayer"];
                     countPlayers[room]["countPlayer"] = player.indexPlayer + 1;
+					countPlayers[room]["aliveLobbyPlayer"].push(player.indexPlayer);
                     // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
                     // console.log( "  ranGender ----------- " , ranGender)
                     // player.gender = ranGender;
@@ -331,6 +339,7 @@ const PartyMatchSocket = (server) => {
                         players : players,
                         isHost : player.isHost,
                         isSpectator : player.isSpectator,
+						"aliveLobbyPlayer" : countPlayers[room]["aliveLobbyPlayer"],
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
@@ -388,7 +397,7 @@ const PartyMatchSocket = (server) => {
                         playerName : player.playerName,
                         userAppId : player.userAppId,
                         avatar : player.avatar,
-                        alivePlayers : countPlayers[room]["alivePlayer"],
+                        "alivePlayers" : countPlayers[room]["alivePlayer"],
                         isHost : player.isHost,
                         gender : player.gender,
                         isSpectator : player.isSpectator,
