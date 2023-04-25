@@ -278,6 +278,7 @@ const PartyMatchSocket = (server) => {
                         rooms[room] = {}; // create the room
 						countPlayerInRoom [room] = {};
 						countPlayerInRoom [room]["countPlayer"] = 0;
+						countPlayerInRoom [room]["alivePlayer"] = [];
                         // console.log(" created new aaaaaaaaaaaa room ===========  " , rooms)
                     }
                     if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
@@ -364,11 +365,10 @@ const PartyMatchSocket = (server) => {
                     player.characterIndex = data.characterIndex;
                    
                     rooms[room][clientId]["player"] = player;// save player in room array
-                    let players = [];
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
-                        // console.log( "  sock ----------- " , sock.player)
-                        players.push(sock.player);
-                    });
+               
+                    // console.log( "  sock ----------- " , sock.player)
+                    countPlayerInRoom[room]["alivePlayer"].push(player.indexPlayer);
+                    
                     player.isHost = data.isHost;
                     // if(players.length == 1){
                     //     player.isHost = "1";
@@ -381,7 +381,7 @@ const PartyMatchSocket = (server) => {
                         playerName : player.playerName,
                         userAppId : player.userAppId,
                         avatar : player.avatar,
-                        // players : players,
+                        alivePlayers : countPlayerInRoom[room]["alivePlayer"],
                         isHost : player.isHost,
                         gender : player.gender,
                         isSpectator : player.isSpectator,
@@ -393,17 +393,7 @@ const PartyMatchSocket = (server) => {
                         console.log( "  sock ----------- " , sock.player)
     
                         sock.sendBytes(buffer);
-                    });
-
-
-                    let paramOthers = {
-                        event : "otherJoinRoom",
-                        clientId : clientId,
-                        players : players,
-                        roomPos : roomsStorePos[room],
-                    }
-                    let bufferOther = Buffer.from(JSON.stringify(paramOthers), 'utf8');
-                    connection.sendBytes(bufferOther);
+                    });                   
     
                 }
                 else if(meta === "startGame") {
