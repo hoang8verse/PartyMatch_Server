@@ -377,7 +377,7 @@ const PartyMatchSocket = (server) => {
                         playerName : player.playerName,
                         userAppId : player.userAppId,
                         avatar : player.avatar,
-                        players : players,
+                        // players : players,
                         isHost : player.isHost,
                         gender : player.gender,
                         isSpectator : player.isSpectator,
@@ -390,6 +390,16 @@ const PartyMatchSocket = (server) => {
     
                         sock.sendBytes(buffer);
                     });
+
+
+                    let paramOthers = {
+                        event : "otherJoinRoom",
+                        clientId : clientId,
+                        players : players,
+                        roomPos : roomsStorePos[room],
+                    }
+                    let bufferOther = Buffer.from(JSON.stringify(paramOthers), 'utf8');
+                    connection.sendBytes(bufferOther);
     
                 }
                 else if(meta === "startGame") {
