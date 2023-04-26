@@ -329,23 +329,36 @@ const PartyMatchSocket = (server) => {
                     //     player.isHost = "1";
                     // } else {
                     //     player.isHost = "0";
-                    // }
-                    let params = {
-                        event : "joinLobbyRoom",
-                        clientId : clientId,
-                        playerName : player.playerName,
-                        userAppId : player.userAppId,
-                        avatar : player.avatar,
-                        players : players,
-                        isHost : player.isHost,
-                        isSpectator : player.isSpectator,
-						"aliveLobbyPlayer" : countPlayers[room]["aliveLobbyPlayer"],
-                    }
-                    let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                    // }                    
+                    
                     Object.entries(rooms[room]).forEach(([, sock]) => {
                         // console.log( "  sock ----------- " , sock.player)
-    
-                        sock.sendBytes(buffer);
+                        var playerIndex = sock.player["indexPlayer"];
+                        console.log( "  joinLobbyRoom param ----------- playerIndex = ", playerIndex)
+
+                        let params = {
+                            event : "joinLobbyRoom",
+                            clientId : clientId,
+                            playerName : player.playerName,
+                            userAppId : player.userAppId,
+                            avatar : player.avatar,
+                            //players : players,
+                            isHost : player.isHost,
+                            isSpectator : player.isSpectator,
+						    "aliveLobbyPlayer" : countPlayers[room]["aliveLobbyPlayer"],
+                        }
+
+                        if(countPlayers[room]["aliveLobbyPlayer"].includes(playerIndex)) {
+
+                            if( player.indexPlayer == playerIndex) {
+                                params["players"] = players;
+                            } else {
+                                params["newPlayer"] = player;
+                            }
+
+                        }    
+                        
+                        sock.sendBytes( Buffer.from(JSON.stringify(params), 'utf8'));
                     });
     
                 }
