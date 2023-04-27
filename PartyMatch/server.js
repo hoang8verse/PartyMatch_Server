@@ -217,6 +217,7 @@ const PartyMatchSocket = (server) => {
                     console.log("playerLen =========== binary  " , parseInt(data.playerLen))
     
                     let host = data['host'];
+                    let isSpectator = data['isSpectator'] == "1";
                     // let _room = getRoom(parseInt(data.playerLen), room);
                     let canJoin = true;
                     let _room;
@@ -226,6 +227,18 @@ const PartyMatchSocket = (server) => {
                     } else {
                         // _room = room.substring(0,room.length-1);
                         _room = room;
+                        let countSpectator = 0;
+                        Object.entries(rooms[_room]).forEach(([, sock]) => {
+
+                            if (sock.player.isSpectator == "1") {
+                                countSpectator = countSpectator + 1;
+                            }
+                        });
+
+                        console.log("isSpectator ===========   ", isSpectator)
+                        console.log("countSpectator ===========   ", countSpectator)
+                        console.log("Object.keys(rooms[room]).length ===========   ", Object.keys(rooms[room]).length)
+
                         if(!rooms[_room]){
                             let params = {
                                 event : "failJoinRoom",
@@ -239,13 +252,27 @@ const PartyMatchSocket = (server) => {
                             return;
                         }
                         // check max 8 user in a room
-                        else if(Object.keys(rooms[room]).length >= 8){
+                        else if (countSpectator >= 2 && isSpectator) {
                             let params = {
-                                event : "failJoinRoom",
-                                clientId : clientId,
-                                room : _room,
-                                message : "Room id : " + _room + " is not availiable! Please try again.",
+                                event: "failJoinRoom",
+                                clientId: clientId,
+                                room: _room,
+                                message: "Room id : " + _room + " is full spectator.",
                             }
+
+                            let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+                            connection.sendBytes(buffer);
+                            canJoin = false;
+                            return;
+                        }
+                        else if (Object.keys(rooms[room]).length - countSpectator >= 8 && isSpectator == false) {
+                            let params = {
+                                event: "failJoinRoom",
+                                clientId: clientId,
+                                room: _room,
+                                message: "Room id : " + _room + " is full players.",
+                            }                        
+
                             let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                             connection.sendBytes(buffer);
                             canJoin = false;
@@ -260,7 +287,7 @@ const PartyMatchSocket = (server) => {
                                         event : "failJoinRoom",
                                         clientId : clientId,
                                         room : _room,
-                                        message : "Room id : " + _room + " is not availiable! Please try again.",
+                                        message : "Room id : " + _room + " is started.",
                                     }
                                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                                     connection.sendBytes(buffer);
