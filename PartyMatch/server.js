@@ -228,16 +228,18 @@ const PartyMatchSocket = (server) => {
                         // _room = room.substring(0,room.length-1);
                         _room = room;
                         let countSpectator = 0;
-                        Object.entries(rooms[_room]).forEach(([, sock]) => {
 
-                            if (sock.player.isSpectator == "1") {
-                                countSpectator = countSpectator + 1;
-                            }
-                        });
+                        if (Object.keys(rooms[_room]).length >  0) {
+                            Object.entries(rooms[_room]).forEach(([, sock]) => {
 
+                                if (sock.player.isSpectator == "1") {
+                                    countSpectator = countSpectator + 1;
+                                }
+                            });
+                        }
                         console.log("isSpectator ===========   ", isSpectator)
                         console.log("countSpectator ===========   ", countSpectator)
-                        console.log("Object.keys(rooms[room]).length ===========   ", Object.keys(rooms[room]).length)
+                        console.log("Object.keys(rooms[room]).length ===========   ", Object.keys(rooms[_room]).length)
 
                         if(!rooms[_room]){
                             let params = {
