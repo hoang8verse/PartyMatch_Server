@@ -633,6 +633,7 @@ const PartyMatchSocket = (server) => {
                         ran1 : data.ran1,
                         ran2 : data.ran2,
                         ran3 : data.ran3,
+                        rans : data.rans,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
