@@ -70,7 +70,8 @@ const PartyMatchSocket = (server) => {
         return result;
       }
     //   randomIntArrayUnique(16, 16)
-    
+    const {enrichCDP, ingestCDP} = require('../CDP/cdp')
+
     const countPlayers = {};
     const rooms = {};
     const roomsStorePos = {};
@@ -338,6 +339,8 @@ const PartyMatchSocket = (server) => {
                     player.room = room;
                     player.isSpectator = data.isSpectator;
                     player.gender = data.gender;
+                    player.phoneNumber = data.phoneNumber;
+                    player.followedOA = data.followedOA;
                     player.indexPlayer =  countPlayers [room]["countPlayer"];
                     countPlayers[room]["countPlayer"] = player.indexPlayer + 1;
 					countPlayers[room]["aliveLobbyPlayer"].push(player.indexPlayer);
@@ -390,6 +393,12 @@ const PartyMatchSocket = (server) => {
                         }    
                         
                         sock.sendBytes( Buffer.from(JSON.stringify(params), 'utf8'));
+                    });
+
+                    enrichCDP({
+                        user : {
+                            userAppId : data.userAppId
+                        }
                     });
     
                 }
@@ -470,6 +479,25 @@ const PartyMatchSocket = (server) => {
                     Object.entries(rooms[room]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
+
+                    // cdp event start game
+                    let player = rooms[room][clientId]["player"];
+                    let _state = {
+                        user : {
+                            userAppId : player.userAppId,
+                            userName : player.playerName,
+                            userPhone : player.phoneNumber,
+                            followedOA : player.followedOA == "0" ? false : true,
+                        }
+                    }
+                    let _data = {
+                        event : "startGame",
+                        eventState : {
+                            startGame : true
+                        },
+                        userEvent : "UserEvent"
+                    }
+                    ingestCDP(_state, _data);
                 }
                 else if(meta === "checkPosition") {
     
@@ -651,6 +679,27 @@ const PartyMatchSocket = (server) => {
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+
+                    // send data cdp
+                    let player = rooms[room][clientId]["player"];
+                    let _state = {
+                        user : {
+                            userAppId : player.userAppId,
+                            userName : player.playerName,
+                            userPhone : player.phoneNumber,
+                            zoaUserAvatar : player.avatar,
+                            followedOA : player.followedOA == "0" ? false : true,
+                        }
+                    }
+                    let _data = {
+                        event : "endGame",
+                        eventState : {
+                            endGame : true,
+                            userStatus : "die",
+                        },
+                        userEvent : "UserEvent"
+                    }
+                    ingestCDP(_state, _data);
     
                 }
                 else if(meta === "playerWin") {
@@ -663,6 +712,27 @@ const PartyMatchSocket = (server) => {
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+
+                    // send data cdp
+                    let player = rooms[room][clientId]["player"];
+                    let _state = {
+                        user : {
+                            userAppId : player.userAppId,
+                            userName : player.playerName,
+                            userPhone : player.phoneNumber,
+                            zoaUserAvatar : player.avatar,
+                            followedOA : player.followedOA == "0" ? false : true,
+                        }
+                    }
+                    let _data = {
+                        event : "endGame",
+                        eventState : {
+                            endGame : true,
+                            userStatus : "win",
+                        },
+                        userEvent : "UserEvent"
+                    }
+                    ingestCDP(_state, _data);
                 }
                 else if(meta === "endGame") {
     
