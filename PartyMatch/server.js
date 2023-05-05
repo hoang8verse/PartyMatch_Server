@@ -4,6 +4,35 @@
 const PartyMatchSocket = (server) => {
     // console.log(" server ===============  " , server)
 
+	const ServerCmd = {   
+		RoomDetected:"0",
+		RequestRoom:"1",
+		Join:"2",
+		JoinLobby:"3",
+		JoinLobbyRoom:"4",
+		JoinRoom:"5",
+		FailJoinRoom:"6",    
+		RoundAlready:"7",        
+		GotoGame:"8",
+		StartGame:"9",
+		PositionPlayer:"10",
+		UpdatePos:"11",
+		CheckPosition:"12",
+		HitEnemy:"13",    
+		Stunned:"14",
+		Moving:"15",
+		RequestTarget:"16",
+		ResponseTarget:"17",
+		CubeReset:"18",
+		CountDown:"19",  
+		CubeFall:"20",    
+		RoundPass:"21",    
+		PlayerDie:"22",    
+		PlayerWin:"23",        
+		PlayerLeaveRoom:"24",
+		Leave:"25",
+		EndGame:"26"    
+	};
     const otpGenerator = require('otp-generator');
     var WebSocketServer = require('websocket').server;
     
@@ -163,7 +192,7 @@ const PartyMatchSocket = (server) => {
                 Object.entries(rooms[room]).forEach(([, sock]) => {
                     console.log("leave leave sock =====  " , sock["player"]);
                     let params = {
-                        event : "playerLeaveRoom",
+                        event : ServerCmd.PlayerLeaveRoom,
                         clientId : clientId,
                         newHost : checkNewHost,
 						"alivePlayers" : countPlayers[room]["alivePlayer"],
@@ -230,7 +259,7 @@ const PartyMatchSocket = (server) => {
 
                         if (!rooms[_room]) {
                             let params = {
-                                event: "failJoinRoom",
+                                event: ServerCmd.FailJoinRoom,
                                 clientId: clientId,
                                 room: _room,
                                 message: "Room id : " + _room + " is not availiable! Please try again.",
@@ -257,7 +286,7 @@ const PartyMatchSocket = (server) => {
                             // check max 8 user in a room
                             if (countSpectator >= 2 && isSpectator) {
                                 let params = {
-                                    event: "failJoinRoom",
+                                    event: ServerCmd.FailJoinRoom,
                                     clientId: clientId,
                                     room: _room,
                                     message: "Room id : " + _room + " is full spectator.",
@@ -270,7 +299,7 @@ const PartyMatchSocket = (server) => {
                             }
                             else if (Object.keys(rooms[room]).length - countSpectator >= 8 && isSpectator == false) {
                                 let params = {
-                                    event: "failJoinRoom",
+                                    event: ServerCmd.FailJoinRoom,
                                     clientId: clientId,
                                     room: _room,
                                     message: "Room id : " + _room + " is full players.",
@@ -287,7 +316,7 @@ const PartyMatchSocket = (server) => {
                                     if (sock.player.isStarted == "1") {
 
                                         let params = {
-                                            event: "failJoinRoom",
+                                            event: ServerCmd.FfailJoinRoom,
                                             clientId: clientId,
                                             room: _room,
                                             message: "Room id : " + _room + " is started.",
@@ -305,7 +334,7 @@ const PartyMatchSocket = (server) => {
                     if(canJoin)
                     {
                         let params = {
-                            event : "roomDetected",
+                            event : ServerCmd.RoomDetected,
                             clientId : clientId,
                             room : _room,
                         }
@@ -368,7 +397,7 @@ const PartyMatchSocket = (server) => {
                         console.log( "  joinLobbyRoom param ----------- playerIndex = ", playerIndex)
 
                         let params = {
-                            event : "joinLobbyRoom",
+                            event : ServerCmd.JoinLobbyRoom,
                             clientId : clientId,
                             playerName : player.playerName,
                             userAppId : player.userAppId,
@@ -397,7 +426,7 @@ const PartyMatchSocket = (server) => {
     
                     console.log("gotoGame  data ===========  " , data)
                     let params = {
-                        event : "gotoGame",
+                        event : ServerCmd.GotoGame,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     console.log("gotoGame  buffer========  " , buffer)
@@ -436,7 +465,7 @@ const PartyMatchSocket = (server) => {
                     //     player.isHost = "0";
                     // }
                     let params = {
-                        event : "joinRoom",
+                        event : ServerCmd.JoinRoom,
                         clientId : clientId,
                         playerName : player.playerName,
                         userAppId : player.userAppId,
@@ -461,7 +490,7 @@ const PartyMatchSocket = (server) => {
                     console.log("startGame  data ===========  " , data)
                     let maxTime = parseFloat(data.maxTime);
                     let params = {
-                        event : "startGame",
+                        event : ServerCmd.StartGame,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -479,7 +508,7 @@ const PartyMatchSocket = (server) => {
                     rooms[room][clientId]["player"]["startIndex"] = ranIndex;
                     console.log(" checkPosition ranIndex  ===========  " , ranIndex)
                     let params = {
-                        event : "positionPlayer",
+                        event : ServerCmd.PositionPlayer,
                         clientId : clientId,
                         ranIndex : ranIndex
                     }
@@ -492,7 +521,7 @@ const PartyMatchSocket = (server) => {
     
                     console.log("roundAlready  data ===========  " , data)
                     let params = {
-                        event : "roundAlready",
+                        event : ServerCmd.RoundAlready,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -505,7 +534,7 @@ const PartyMatchSocket = (server) => {
                     console.log("countDown  data ===========  " , data)
                     let timeCount = parseInt(data.timer) - 1;
                     let params = {
-                        event : "countDown",
+                        event : ServerCmd.CountDown,
                         clientId : clientId,
                         timer : timeCount,
                     }
@@ -527,7 +556,7 @@ const PartyMatchSocket = (server) => {
                     rooms[room][clientId]["player"]["position"] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : "moving",
+                        event : ServerCmd.Moving,
                         clientId : clientId,
                         velocity : _posVelocity,
                         h : data.h,
@@ -547,7 +576,7 @@ const PartyMatchSocket = (server) => {
                     // rooms[room][clientId]["player"]["position"] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : "hitEnemy",
+                        event : ServerCmd.HitEnemy,
                         clientId : clientId,
                         hitEnemyId : data.enemyId,
                         hitPos : _pos,
@@ -565,7 +594,7 @@ const PartyMatchSocket = (server) => {
                     // rooms[room][clientId]["player"]["position"] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : "stunned",
+                        event : ServerCmd.Stunned,
                         clientId : clientId,
                         stunnedByEnemyId : data.enemyId,
                         hitPos : _pos,
@@ -584,7 +613,7 @@ const PartyMatchSocket = (server) => {
                     // rooms[room][clientId]["player"]["position"] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : "updatePos",
+                        event : ServerCmd.UpdatePos,
                         clientId : clientId,
                         pos : _pos,
                         rot : _rot,
@@ -599,7 +628,7 @@ const PartyMatchSocket = (server) => {
     
                     console.log("requestTarget  data ===========  " , data)
                     let params = {
-                        event : "responseTarget",
+                        event : ServerCmd.ResponseTarget,
                         clientId : clientId,
                         target : data.target,
                         ran1 : data.ran1,
@@ -615,7 +644,7 @@ const PartyMatchSocket = (server) => {
                 else if(meta === "cubeFall") {
                     console.log("cubeFall  data ===========  " , data)
                     let params = {
-                        event : "cubeFall",
+                        event : ServerCmd.CubeFall,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -624,7 +653,7 @@ const PartyMatchSocket = (server) => {
                 else if(meta === "cubeReset") {
                     console.log("cubeReset  data ===========  " , data)
                     let params = {
-                        event : "cubeReset",
+                        event : ServerCmd.CubeReset,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -633,7 +662,7 @@ const PartyMatchSocket = (server) => {
                 else if(meta === "roundPass") {
                     rooms[room][clientId]["player"]["round"] = parseInt(data.round);
                     let params = {
-                        event : "roundPass",
+                        event : ServerCmd.RoundPass,
                         clientId : clientId,
                         roundPass :  parseInt(data.round),
                         countPlayer :  Object.keys(rooms[room]).length
@@ -645,7 +674,7 @@ const PartyMatchSocket = (server) => {
                     console.log("playerDie data ========================= " + data);
                     rooms[room][clientId]["player"]["playerStatus"] = "die";
                     let params = {
-                        event : "playerDie",
+                        event : ServerCmd.PlayerDie,
                         clientId : clientId,
                         playerStatus :  "die"
                     }
@@ -657,7 +686,7 @@ const PartyMatchSocket = (server) => {
                     rooms[room][clientId]["player"]["playerStatus"] = "win";
                     rooms[room][clientId]["player"]["roundPass"] = parseInt(data.roundPass);
                     let params = {
-                        event : "playerWin",
+                        event : ServerCmd.PlayerWin,
                         clientId : clientId,
                         playerStatus :  "win"
                     }
@@ -672,7 +701,7 @@ const PartyMatchSocket = (server) => {
                     });
                     // console.log("players  array ====================== " + players);
                     let params = {
-                        event : "endGame",
+                        event : ServerCmd.EndGame,
                         clientId : clientId,
                         players :  players
                     }
