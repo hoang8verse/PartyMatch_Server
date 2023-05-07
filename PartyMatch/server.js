@@ -478,27 +478,30 @@ const PartyMatchSocket = (server) => {
                     // console.log("startGame  rooms[room]========  " , rooms[room])
                     Object.entries(rooms[room]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
+
+                       // cdp event start game
+                        let player = rooms[room][sock["player"]["id"]]["player"];
+                        let _state = {
+                            user : {
+                                userAppId : player.userAppId,
+                                userName : player.playerName,
+                                userPhone : player.phoneNumber,
+                                userAvatar : player.avatar,
+                                followedOA : player.followedOA == "0" ? false : true,
+                            }
+                        }
+                        let _data = {
+                            event : "startGame",
+                            eventState : {
+                                startGame : true,
+                                roomID : room,
+                            },
+                            userEvent : "UserEvent"
+                        }
+                        ingestCDP(_state, _data);
                     });
 
-                    // cdp event start game
-                    let player = rooms[room][clientId]["player"];
-                    let _state = {
-                        user : {
-                            userAppId : player.userAppId,
-                            userName : player.playerName,
-                            userPhone : player.phoneNumber,
-                            userAvatar : player.avatar,
-                            followedOA : player.followedOA == "0" ? false : true,
-                        }
-                    }
-                    let _data = {
-                        event : "startGame",
-                        eventState : {
-                            startGame : true
-                        },
-                        userEvent : "UserEvent"
-                    }
-                    ingestCDP(_state, _data);
+                    
                 }
                 else if(meta === "checkPosition") {
     
@@ -698,6 +701,7 @@ const PartyMatchSocket = (server) => {
                         eventState : {
                             endGame : true,
                             userStatus : "die",
+                            roomID : room,
                         },
                         userEvent : "UserEvent"
                     }
@@ -731,6 +735,7 @@ const PartyMatchSocket = (server) => {
                         eventState : {
                             endGame : true,
                             userStatus : "win",
+                            roomID : room,
                         },
                         userEvent : "UserEvent"
                     }
