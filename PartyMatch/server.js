@@ -51,7 +51,9 @@ const PartyMatchSocket = (server) => {
         Round:"14",
         AlivePlayers:"15",
         AliveLobbyPlayers:"16",
-        CountPlayers:"17"
+        CountPlayers:"17",
+        PhoneNumber:"18",
+        FollowedOA:"19"
 	};
 	const playerIdKey =  EPlayerProfile.ClientId;
 	const nickNameKey =  EPlayerProfile.NickName;
@@ -71,6 +73,8 @@ const PartyMatchSocket = (server) => {
     const alivePlayerKey = EPlayerProfile.AlivePlayers;
 	const aliveLobbyPlayerKey = EPlayerProfile.AliveLobbyPlayers;
 	const countPlayersKey = EPlayerProfile.CountPlayers;
+	const phoneNumberKey = EPlayerProfile.PhoneNumber;
+	const followedOAKey = EPlayerProfile.FollowedOA;
 
     const metaKey = "meta";
     const otpGenerator = require('otp-generator');
@@ -139,7 +143,8 @@ const PartyMatchSocket = (server) => {
         return result;
       }
     //   randomIntArrayUnique(16, 16)
-    
+    const {enrichCDP, ingestCDP} = require('../CDP/cdp')
+
     const countPlayers = {};
     const rooms = {};
     const roomsStorePos = {};
@@ -400,8 +405,7 @@ const PartyMatchSocket = (server) => {
                         // console.log(" created new aaaaaaaaaaaa room ===========  " , rooms)
                     }
                     if(! rooms[roomId][clientId]) rooms[roomId][clientId] = connection; // join the room
-                    // console.log(' rooms[roomId] 111111111111 ========  ' , rooms);
-    
+
                     var player = {};
                     player[playerIdKey] = clientId;                    
                     player[nickNameKey] = data[nickNameKey];
@@ -450,6 +454,12 @@ const PartyMatchSocket = (server) => {
                         }    
                         
                         sock.sendBytes( Buffer.from(JSON.stringify(params), 'utf8'));
+                    });
+
+                    enrichCDP({
+                        user : {
+                            userAppId : data[appIdKey]
+                        }
                     });
     
                 }
@@ -527,7 +537,30 @@ const PartyMatchSocket = (server) => {
                     // console.log("startGame  rooms[roomId]========  " , rooms[roomId])
                     Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
+
+                       // cdp event start game
+                        let player = rooms[room][sock["player"]["id"]]["player"];
+                        let _state = {
+                            user : {
+                                userAppId : player[appIdKey],
+                                userName : player[nickNameKey],
+                                userPhone : player[phoneNumberKey],
+                                userAvatar : player[avatarKey],
+                                followedOA : player[followedOAKey] == "0" ? false : true,
+                            }
+                        }
+                        let _data = {
+                            event : "startGame",
+                            eventState : {
+                                startGame : true,
+                                roomID : roomId,
+                            },
+                            userEvent : "UserEvent"
+                        }
+                        ingestCDP(_state, _data);
                     });
+
+                    
                 }
                 else if(meta === EServerCmd.CheckPosition) {
     
@@ -658,7 +691,7 @@ const PartyMatchSocket = (server) => {
                     console.log("requestTarget  data ===========  " , data)
                     let params = {
                         event : EServerCmd.ResponseTarget,
-                        clientId : clientId,                                         
+                        clientId : clientId,  
                         rans : data.rans,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
@@ -706,8 +739,30 @@ const PartyMatchSocket = (server) => {
                     }
                     params[statusKey] =  "die";
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
+
                     Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
-    
+
+                    // send data cdp
+                    let player = rooms[roomId][clientId]["player"];
+                    let _state = {
+                        user : {
+                            userAppId : player[appIdKey],
+                            userName : player[nickNameKey],
+                            userPhone : player[phoneNumberKey],
+                            userAvatar : player[avatarKey],
+                            followedOA : player[followedOAKey] == "0" ? false : true,
+                        }
+                    }
+                    let _data = {
+                        event : "endGame",
+                        eventState : {
+                            endGame : true,
+                            userStatus : params[statusKey],
+                            roomID : roomId,
+                        },
+                        userEvent : "UserEvent"
+                    }
+                    ingestCDP(_state, _data);    
                 }
                 else if(meta === EServerCmd.PlayerWin) {
                     rooms[roomId][clientId]["player"][statusKey] = "win";
@@ -720,6 +775,28 @@ const PartyMatchSocket = (server) => {
                     params[statusKey] =  "win";
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
+
+                    // send data cdp
+                    let player = rooms[roomId][clientId]["player"];
+                    let _state = {
+                        user : {
+                            userAppId : player[appIdKey],
+                            userName : player[nickNameKey],
+                            userPhone : player[phoneNumberKey],
+                            userAvatar : player[avatarKey],
+                            followedOA : player[followedOAKey] == "0" ? false : true,
+                        }
+                    }
+                    let _data = {
+                        event : "endGame",
+                        eventState : {
+                            endGame : true,
+                            userStatus : params[statusKey],
+                            roomID : roomId,
+                        },
+                        userEvent : "UserEvent"
+                    }
+                    ingestCDP(_state, _data);
                 }
                 else if(meta === EServerCmd.EndGame) {
     
