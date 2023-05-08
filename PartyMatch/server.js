@@ -279,7 +279,7 @@ const PartyMatchSocket = (server) => {
                 // connection.sendBytes(message.binaryData);
     
                 var data = JSON.parse(message.binaryData);
-                console.log('Received Message data :  ' + JSON.stringify(data));
+                //console.log('Received Message data :  ' + JSON.stringify(data));
                 var roomId = data[roomIdKey];
                 var meta = data[metaKey];
                 						
@@ -690,36 +690,38 @@ const PartyMatchSocket = (server) => {
                     Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
                 else if(meta === EServerCmd.RoundPass) {
-                    rooms[roomId][clientId]["player"][EPlayerProfile.Round] = parseInt(data.round);
+                    rooms[roomId][clientId]["player"][roundKey] = parseInt(data[roundKey]);
                     let params = {
                         event : EServerCmd.RoundPass,
                         clientId : clientId,
-                        roundPass :  parseInt(data.round),
-                        countPlayer :  Object.keys(rooms[roomId]).length
+                        roundPass :  parseInt(data[roundKey]),                        
                     }
+                    params[countPlayersKey] = Object.keys(rooms[roomId]).length;
+
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
                 else if(meta === EServerCmd.PlayerDie) {
                     console.log("playerDie data ========================= " + data);
-                    rooms[roomId][clientId]["player"][EPlayerProfile.Status] = "die";
+                    rooms[roomId][clientId]["player"][statusKey] = "die";
                     let params = {
                         event : EServerCmd.PlayerDie,
-                        clientId : clientId,
-                        playerStatus :  "die"
+                        clientId : clientId,                       
                     }
+                    params[statusKey] =  "die";
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
     
                 }
                 else if(meta === EServerCmd.PlayerWin) {
-                    rooms[roomId][clientId]["player"][EPlayerProfile.Status] = "win";
+                    rooms[roomId][clientId]["player"][statusKey] = "win";
                     rooms[roomId][clientId]["player"]["roundPass"] = parseInt(data.roundPass);
                     let params = {
                         event : EServerCmd.PlayerWin,
-                        clientId : clientId,
-                        playerStatus :  "win"
+                        clientId : clientId,                        
                     }
+
+                    params[statusKey] =  "win";
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
