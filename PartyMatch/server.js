@@ -3,8 +3,7 @@
 
 const PartyMatchSocket = (server) => {
     // console.log(" server ===============  " , server)
-
-	const ServerCmd = {   
+	const EServerCmd = {   
 		RoomDetected:"0",
 		RequestRoom:"1",
 		Join:"2",
@@ -33,6 +32,47 @@ const PartyMatchSocket = (server) => {
 		Leave:"25",
 		EndGame:"26"    
 	};
+    
+    const EPlayerProfile = {   
+	    Id:"0",
+        Index:"1",
+        AppId:"2",
+        Avatar:"3",
+        Gender:"4",
+        NickName:"5",
+        RoomId:"6",
+        IsHost:"7",
+        IsSpectator:"8",
+        CharacterIndex:"9",
+        StartIndex:"10",
+        Position:"11",   
+        IsStarted:"12",    
+        Status:"13",    
+        Round:"14",
+        AlivePlayers:"15",
+        AliveLobbyPlayers:"16",
+        CountPlayers:"17"
+	};
+	const playerIdKey =  EPlayerProfile.Id;
+	const nickNameKey =  EPlayerProfile.NickName;
+	const appIdKey = EPlayerProfile.AppId;
+	const avatarKey = EPlayerProfile.Avatar;	
+	const isHostKey = EPlayerProfile.IsHost;
+	const genderKey = EPlayerProfile.Gender;
+	const isSpectatorKey = EPlayerProfile.IsSpectator;
+	const characterIndexKey = EPlayerProfile.CharacterIndex;
+	const playerIndexKey = EPlayerProfile.Index;
+	const roomIdKey = EPlayerProfile.RoomId;
+    const startIndexKey = EPlayerProfile.StartIndex;
+    const positionKey = EPlayerProfile.Position;
+    const isStartedKey = EPlayerProfile.IsStarted;
+    const statusKey = EPlayerProfile.Status;
+    const roundKey = EPlayerProfile.Round;
+    const alivePlayerKey = EPlayerProfile.AlivePlayers;
+	const aliveLobbyPlayerKey = EPlayerProfile.AliveLobbyPlayers;
+	const countPlayersKey = EPlayerProfile.CountPlayers;
+
+    const metaKey = "meta";
     const otpGenerator = require('otp-generator');
     var WebSocketServer = require('websocket').server;
     
@@ -59,10 +99,10 @@ const PartyMatchSocket = (server) => {
             upperCaseAlphabets: false,
             specialChars: false,
         });
-        let isHost = "0";
+        let isHost = "0";		
         if(RoomStores.length == 0){
             RoomStores.push({
-                room : roomId ? roomId : roomRan,
+                roomIdKey: roomId ? roomId : roomRan,
                 numPlayer : 1
             })
             isHost = "1";
@@ -72,7 +112,7 @@ const PartyMatchSocket = (server) => {
                 RoomStores[RoomStores.length - 1].numPlayer += 1;
             } else {
                 RoomStores.push({
-                    room : roomId ? roomId : roomRan,
+                    roomIdKey: roomId ? roomId : roomRan,
                     numPlayer : 1
                 })
                 isHost = "1";
@@ -81,7 +121,7 @@ const PartyMatchSocket = (server) => {
         console.log("RoomStores afterrrr -------------  ", RoomStores)
         let response = {
             host :  isHost,
-            room :  RoomStores[RoomStores.length - 1].room
+            roomIdKey :  RoomStores[RoomStores.length - 1].room
         }
         return response;
       }
@@ -103,8 +143,7 @@ const PartyMatchSocket = (server) => {
     const countPlayers = {};
     const rooms = {};
     const roomsStorePos = {};
-    var Player = require('./PlayerPartyMatch.js');
-    
+        
     function parseVector3(str) {
         // console.log("str ============  " , str);
         var sliceString = str.slice(1,str.length - 1);
@@ -148,56 +187,57 @@ const PartyMatchSocket = (server) => {
         // });
         const clientId = request.key;
         console.log("clientId ===================   " ,clientId);
-        const leave = room => {
-            console.log("_room leave leave ===========  " , room)
+        const leave = roomId => {
+            console.log("_room leave leave ===========  " , roomId)
             // not present: do nothing
-            if(! rooms[room][clientId]) return;
+            if(! rooms[roomId][clientId]) return;
             let checkNewHost = "";
             // if the one exiting is the last one, destroy the room
-            if(Object.keys(rooms[room]).length === 1){
-                delete rooms[room];
-                delete roomsStorePos[room];
-                delete countPlayers[room];
+            if(Object.keys(rooms[roomId]).length === 1){
+                delete rooms[roomId];
+                delete roomsStorePos[roomId];
+                delete countPlayers[roomId];
             }
             // otherwise simply leave the room
             else {
                 let isFindNewHost = false;
-                if(rooms[room][clientId]["player"]["isHost"] == "1"){
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                if(rooms[roomId][clientId]["player"][isHostKey] == "1"){
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                         // console.log("leave leave sock aaaa ad=====  " , sock["player"]);
-                        if(sock["player"]["id"] != clientId && !isFindNewHost){
-                            rooms[room][sock["player"]["id"]]["player"]["isHost"] = "1";
-                            checkNewHost = sock["player"]["id"];
+                        if(sock["player"][EPlayerProfile.Id] != clientId && !isFindNewHost){
+                            rooms[roomId][sock["player"][EPlayerProfile.Id]]["player"][isHostKey] = "1";
+                            checkNewHost = sock["player"][EPlayerProfile.Id];
                             isFindNewHost = true;
                             console.log(" new host ------  " , sock["player"]);
                         }
                     });
                 }				
-				var leavePlayerIndex = rooms[room][clientId]["player"]["indexPlayer"];				
+				var leavePlayerIndex = rooms[roomId][clientId]["player"][EPlayerProfile.Index];				
 								
 				console.log("_room leave leave =========== indexPlayer:" , leavePlayerIndex);
-				console.log("_room leave leave =========== alivePlayer:" , countPlayers[room]["alivePlayer"]);
-				countPlayers[room]["alivePlayer"] = countPlayers[room]["alivePlayer"].filter((value) => value != leavePlayerIndex);
-				console.log("==> updated _room leave leave =========== alivePlayer:" , countPlayers[room]["alivePlayer"]);
+				console.log("_room leave leave =========== alivePlayer:" , countPlayers[roomId][alivePlayerKey]);
+				countPlayers[roomId][alivePlayerKey] = countPlayers[roomId][alivePlayerKey].filter((value) => value != leavePlayerIndex);
+				console.log("==> updated _room leave leave =========== alivePlayer:" , countPlayers[roomId][alivePlayerKey]);
 							
 				console.log("_room leave leave =========== indexPlayer:" , leavePlayerIndex);
-				console.log("_room leave leave =========== aliveLobbyPlayer:" , countPlayers[room]["aliveLobbyPlayer"]);
-				countPlayers[room]["aliveLobbyPlayer"] = countPlayers[room]["aliveLobbyPlayer"].filter((value) => value != leavePlayerIndex);
-				console.log("==> updated _room leave leave =========== aliveLobbyPlayer:" , countPlayers[room]["aliveLobbyPlayer"]);
+				console.log("_room leave leave =========== aliveLobbyPlayer:" , countPlayers[roomId][aliveLobbyPlayerKey]);
+				countPlayers[roomId]["aliveLobbyPlayer"] = countPlayers[roomId][aliveLobbyPlayerKey].filter((value) => value != leavePlayerIndex);
+				console.log("==> updated _room leave leave =========== aliveLobbyPlayer:" , countPlayers[roomId][aliveLobbyPlayerKey]);
 				
-                delete rooms[room][clientId];
+                delete rooms[roomId][clientId];
             }
-            if(rooms[room]) {
+            if(rooms[roomId]) {
     
-                Object.entries(rooms[room]).forEach(([, sock]) => {
+                Object.entries(rooms[roomId]).forEach(([, sock]) => {
                     console.log("leave leave sock =====  " , sock["player"]);
                     let params = {
-                        event : ServerCmd.PlayerLeaveRoom,
+                        event : EServerCmd.PlayerLeaveRoom,
                         clientId : clientId,
-                        newHost : checkNewHost,
-						"alivePlayers" : countPlayers[room]["alivePlayer"],
-						"aliveLobbyPlayer" : countPlayers[room]["aliveLobbyPlayer"],
+                        newHost : checkNewHost,				
                     }
+                    params[alivePlayerKey] = countPlayers[roomId][alivePlayerKey];
+                    params[aliveLobbyPlayerKey] = countPlayers[roomId][aliveLobbyPlayerKey];
+
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     sock.sendBytes(buffer);
                 });
@@ -206,8 +246,8 @@ const PartyMatchSocket = (server) => {
         };
         function CheckIndexAvaible (randIndex, room){
             let index = false;
-            Object.entries(rooms[room]).forEach(([, sock]) => {
-                let _startIndex =  parseInt(sock["player"]["startIndex"]); 
+            Object.entries(rooms[roomId]).forEach(([, sock]) => {
+                let _startIndex =  parseInt(sock["player"][startIndexKey]); 
                 if(randIndex !=  _startIndex){
                     index = true;
                 }
@@ -239,31 +279,33 @@ const PartyMatchSocket = (server) => {
                 // connection.sendBytes(message.binaryData);
     
                 var data = JSON.parse(message.binaryData);
-                // console.log('Received Message binary :  ' +  message.binaryData);
-                const { meta, room } = data;
-    
-                if(meta === ServerCmd.RequestRoom) {
+                console.log('Received Message data :  ' + JSON.stringify(data));
+                var roomId = data[roomIdKey];
+                var meta = data[metaKey];
+                						
+                if(meta === EServerCmd.RequestRoom) {
                     console.log("playerLen =========== binary  " , parseInt(data.playerLen))
     
                     let host = data['host'];
-                    let isSpectator = data['isSpectator'] == "1";
+                    let isSpectator = data[EPlayerProfile.IsSpectator] == "1";					
                     // let _room = getRoom(parseInt(data.playerLen), room);
                     let canJoin = true;
                     let _room;
                     if(host == "1"){
-                        _room = room;
-                        roomsStorePos[room] = randomIntArrayUnique(16, 16);
+                        _room = roomId;
+                        roomsStorePos[roomId] = randomIntArrayUnique(16, 16);
                     } else {
                         // _room = room.substring(0,room.length-1);
-                        _room = room;                        
+                        _room = roomId;                        
 
                         if (!rooms[_room]) {
                             let params = {
-                                event: ServerCmd.FailJoinRoom,
+                                event: EServerCmd.FailJoinRoom,
                                 clientId: clientId,
-                                room: _room,
+                                roomIdKey: _room,
                                 message: "Room id : " + _room + " is not availiable! Please try again.",
                             }
+							params[roomIdKey] = _room;
                             let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                             connection.sendBytes(buffer);
                             canJoin = false;
@@ -282,28 +324,28 @@ const PartyMatchSocket = (server) => {
                             }
                             console.log("isSpectator ===========   ", isSpectator)
                             console.log("countSpectator ===========   ", countSpectator)
-                            console.log("Object.keys(rooms[room]).length ===========   ", Object.keys(rooms[_room]).length)
+                            console.log("Object.keys(rooms[roomId]).length ===========   ", Object.keys(rooms[_room]).length)
                             // check max 8 user in a room
                             if (countSpectator >= 2 && isSpectator) {
                                 let params = {
-                                    event: ServerCmd.FailJoinRoom,
-                                    clientId: clientId,
-                                    room: _room,
+                                    event: EServerCmd.FailJoinRoom,
+                                    clientId: clientId,                                 
                                     message: "Room id : " + _room + " is full spectator.",
                                 }
+								params[roomIdKey] = _room;
 
                                 let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                                 connection.sendBytes(buffer);
                                 canJoin = false;
                                 return;
                             }
-                            else if (Object.keys(rooms[room]).length - countSpectator >= 8 && isSpectator == false) {
+                            else if (Object.keys(rooms[roomId]).length - countSpectator >= 8 && isSpectator == false) {
                                 let params = {
-                                    event: ServerCmd.FailJoinRoom,
-                                    clientId: clientId,
-                                    room: _room,
+                                    event: EServerCmd.FailJoinRoom,
+                                    clientId: clientId,                                  
                                     message: "Room id : " + _room + " is full players.",
                                 }
+								params[roomIdKey] = _room;
 
                                 let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                                 connection.sendBytes(buffer);
@@ -316,11 +358,11 @@ const PartyMatchSocket = (server) => {
                                     if (sock.player.isStarted == "1") {
 
                                         let params = {
-                                            event: ServerCmd.FailJoinRoom,
-                                            clientId: clientId,
-                                            room: _room,
+                                            event: EServerCmd.FailJoinRoom,
+                                            clientId: clientId,                                            
                                             message: "Room id : " + _room + " is started.",
                                         }
+										params[roomIdKey] = _room;
                                         let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                                         connection.sendBytes(buffer);
                                         canJoin = false;
@@ -328,89 +370,78 @@ const PartyMatchSocket = (server) => {
                                     }
                                 });
                             }
+							
                         }
                     }
                     
                     if(canJoin)
                     {
                         let params = {
-                            event : ServerCmd.RoomDetected,
-                            clientId : clientId,
-                            room : _room,
+                            event : EServerCmd.RoomDetected,
+                            clientId : clientId,                          
                         }
+
+						params[roomIdKey] = _room;
                         // let bufferArr = str2ab(JSON.stringify(params));
                         let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-        
+						console.log("params ===========   ", params)
                         connection.sendBytes(buffer);
                     }
                     
                 }
-                else if(meta === ServerCmd.JoinLobby) {
+                else if(meta === EServerCmd.JoinLobby) {
     
-                    if(!rooms[room]){
-                        rooms[room] = {}; // create the room
-						countPlayers [room] = {};
-						countPlayers [room]["countPlayer"] = 0;
-						countPlayers [room]["alivePlayer"] = [];
-						countPlayers [room]["aliveLobbyPlayer"] = [];
+                    if(!rooms[roomId]){
+                        rooms[roomId] = {}; // create the room
+						countPlayers [roomId] = {};
+						countPlayers [roomId][countPlayersKey] = 0;
+						countPlayers [roomId][alivePlayerKey] = [];
+						countPlayers [roomId][aliveLobbyPlayerKey] = [];
                         // console.log(" created new aaaaaaaaaaaa room ===========  " , rooms)
                     }
-                    if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
-                    // console.log(' rooms[room] 111111111111 ========  ' , rooms);
+                    if(! rooms[roomId][clientId]) rooms[roomId][clientId] = connection; // join the room
+                    // console.log(' rooms[roomId] 111111111111 ========  ' , rooms);
     
-                    var player = new Player();
-                    player.id = clientId;
-                    // player.playerName = "Player " + Object.keys(rooms[room]).length;
-                    player.playerName = data.playerName;
-                    player.userAppId = data.userAppId;
-                    player.avatar = data.avatar;
-                    player.room = room;
-                    player.isSpectator = data.isSpectator;
-                    player.gender = data.gender;
-                    player.indexPlayer =  countPlayers [room]["countPlayer"];
-                    countPlayers[room]["countPlayer"] = player.indexPlayer + 1;
-					countPlayers[room]["aliveLobbyPlayer"].push(player.indexPlayer);
-                    // let ranGender = Math.floor(Math.random() * 5) % 2 == 0 ? "0" : "1";
-                    // console.log( "  ranGender ----------- " , ranGender)
-                    // player.gender = ranGender;
-                    console.log( "  new player created  ----------- " , player)
-                    // let _pos = parseVector3(data.pos);
-                    // console.log("pos :   " , _pos);
-                    // player.position = _pos;
+                    var player = {};
+                    player[playerIdKey] = clientId;                    
+                    player[nickNameKey] = data[nickNameKey];
+                    player[appIdKey]    = data[appIdKey];
+                    player[avatarKey]   = data[avatarKey];
+                    player[roomIdKey]    = roomId;
+                    player[isSpectatorKey] = data[isSpectatorKey];
+                    player[genderKey]      = data[genderKey];
+                    player[playerIndexKey] =  countPlayers [roomId][countPlayersKey];
+                    countPlayers[roomId][countPlayersKey] = player[playerIndexKey] + 1;
+					countPlayers[roomId][aliveLobbyPlayerKey].push(player[playerIndexKey]);
+                    console.log( "  new player created  ----------- " , player);
     
-                    rooms[room][clientId]["player"] = player;// save player in room array
+                    rooms[roomId][clientId]["player"] = player;// save player in room array
                     let players = [];
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                         // console.log( "  sock ----------- " , sock.player)
                         players.push(sock.player);
                     });
-                    player.isHost = data.isHost;
-                    // if(players.length == 1){
-                    //     player.isHost = "1";
-                    // } else {
-                    //     player.isHost = "0";
-                    // }                    
-                    
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    player[isHostKey] = data[isHostKey];
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                         // console.log( "  sock ----------- " , sock.player)
-                        var playerIndex = sock.player["indexPlayer"];
-                        console.log( "  joinLobbyRoom param ----------- playerIndex = ", playerIndex)
+                        var playerIndex = sock.player[playerIndexKey];
+                        console.log( "  joinLobbyRoom param ----------- playerIndex = ", playerIndex);
 
-                        let params = {
-                            event : ServerCmd.JoinLobbyRoom,
+                        let params = {						
+                            event : EServerCmd.JoinLobbyRoom,
                             clientId : clientId,
-                            playerName : player.playerName,
-                            userAppId : player.userAppId,
-                            avatar : player.avatar,
-                            //players : players,
-                            isHost : player.isHost,
-                            isSpectator : player.isSpectator,
-						    "aliveLobbyPlayer" : countPlayers[room]["aliveLobbyPlayer"],
-                        }
+						}
+                        
+						params[nickNameKey] = player[nickNameKey];
+                        params[appIdKey]    = player[appIdKey] ;
+                        params[avatarKey]   = player[avatarKey];                         
+                        params[isHostKey]   = player[isHostKey];
+                        params[isSpectatorKey] = player[isSpectatorKey];
+						params[aliveLobbyPlayerKey] = countPlayers[roomId][aliveLobbyPlayerKey];                        
 
-                        if(countPlayers[room]["aliveLobbyPlayer"].includes(playerIndex)) {
+                        if(countPlayers[roomId][aliveLobbyPlayerKey].includes(playerIndex)) {
 
-                            if( player.indexPlayer == playerIndex) {
+                            if( player[playerIndexKey] == playerIndex) {
                                 params["players"] = players;
                             } else {
                                 params["newPlayer"] = player;
@@ -422,141 +453,139 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === ServerCmd.GotoGame) {
+                else if(meta === EServerCmd.GotoGame) {
     
                     console.log("gotoGame  data ===========  " , data)
                     let params = {
-                        event : ServerCmd.GotoGame,
+                        event : EServerCmd.GotoGame,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     console.log("gotoGame  buffer========  " , buffer)
-                    // console.log("startGame  rooms[room]========  " , rooms[room])
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
-                        rooms[room][sock["player"]["id"]]["player"]["isStarted"] = "1";
+                    // console.log("startGame  rooms[roomId]========  " , rooms[roomId])
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
+                        rooms[roomId][sock["player"][EPlayerProfile.Id]]["player"][EPlayerProfile.IsStarted] = "1";
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === ServerCmd.Join) {
+                else if(meta === EServerCmd.Join) {
     
                     // console.log(' clientId ========  ' , clientId);
     
-                    if(! rooms[room]){
-                        rooms[room] = {}; // create the room
+                    if(! rooms[roomId]){
+                        rooms[roomId] = {}; // create the room
                     }
-                    if(! rooms[room][clientId]) rooms[room][clientId] = connection; // join the room
+                    if(! rooms[roomId][clientId]) rooms[roomId][clientId] = connection; // join the room
 
-                    var player = rooms[room][clientId]["player"];
+                    var player = rooms[roomId][clientId]["player"];
                     let _pos = parseVector3(data.pos);
                     console.log("pos :   " , _pos);
-                    player.position = _pos;
-                    player.isStarted = "1";
+                    player[positionKey] = _pos;
+                    player[startIndexKey] = "1";
                     console.log( "  new player created  ----------- " , player)
-                    player.characterIndex = data.characterIndex;
+                    player[characterIndexKey] = data[characterIndexKey];
                    
-                    rooms[room][clientId]["player"] = player;// save player in room array
+                    rooms[roomId][clientId]["player"] = player;// save player in room array
                
                     // console.log( "  sock ----------- " , sock.player)
-                    countPlayers[room]["alivePlayer"].push(player.indexPlayer);
+                    countPlayers[roomId][alivePlayerKey].push(player[playerIndexKey]);
                     
-                    player.isHost = data.isHost;
-                    // if(players.length == 1){
-                    //     player.isHost = "1";
-                    // } else {
-                    //     player.isHost = "0";
-                    // }
+                    player[isHostKey] = data[isHostKey];
+                    
                     let params = {
-                        event : ServerCmd.JoinRoom,
+                        event : EServerCmd.JoinRoom,
                         clientId : clientId,
-                        playerName : player.playerName,
-                        userAppId : player.userAppId,
-                        avatar : player.avatar,
-                        "alivePlayers" : countPlayers[room]["alivePlayer"],
-                        isHost : player.isHost,
-                        gender : player.gender,
-                        isSpectator : player.isSpectator,
-                        indexPlayer : player.indexPlayer,
-                        roomPos : roomsStorePos[room],
-                    }
+						roomPos : roomsStorePos[roomId],
+					}
+					
+                    params[nickNameKey] = player[nickNameKey];
+                    params[appIdKey] = player[appIdKey];
+                    params[avatarKey] = player[avatarKey];
+                    params[alivePlayerKey] = countPlayers[roomId][alivePlayerKey];
+                    params[isHostKey] = player[isHostKey];
+                    params[genderKey] = player[genderKey];
+                    params[isSpectatorKey] = player[isSpectatorKey];
+                    params[playerIndexKey] = player[playerIndexKey];                        
+                    
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                         console.log( "  sock ----------- " , sock.player)
     
                         sock.sendBytes(buffer);
                     });                   
     
                 }
-                else if(meta === ServerCmd.StartGame) {
+                else if(meta === EServerCmd.StartGame) {
     
                     console.log("startGame  data ===========  " , data)
                     let maxTime = parseFloat(data.maxTime);
                     let params = {
-                        event : ServerCmd.StartGame,
+                        event : EServerCmd.StartGame,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     console.log("startGame  buffer========  " , buffer)
-                    // console.log("startGame  rooms[room]========  " , rooms[room])
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    // console.log("startGame  rooms[roomId]========  " , rooms[roomId])
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === ServerCmd.CheckPosition) {
+                else if(meta === EServerCmd.CheckPosition) {
     
                     console.log("checkPosition  data ===========  " , data)
                     let ranLength = parseInt(data.ranLength); 
                     let ranIndex = GetRandomIndexPos(ranLength, room);
-                    rooms[room][clientId]["player"]["startIndex"] = ranIndex;
+                    rooms[roomId][clientId]["player"][startIndexKey] = ranIndex;
                     console.log(" checkPosition ranIndex  ===========  " , ranIndex)
                     let params = {
-                        event : ServerCmd.PositionPlayer,
+                        event : EServerCmd.PositionPlayer,
                         clientId : clientId,
                         ranIndex : ranIndex
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === ServerCmd.RoundAlready) {
+                else if(meta === EServerCmd.RoundAlready) {
     
                     console.log("roundAlready  data ===========  " , data)
                     let params = {
-                        event : ServerCmd.RoundAlready,
+                        event : EServerCmd.RoundAlready,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === ServerCmd.CountDown) {
+                else if(meta === EServerCmd.CountDown) {
     
                     console.log("countDown  data ===========  " , data)
                     let timeCount = parseInt(data.timer) - 1;
                     let params = {
-                        event : ServerCmd.CountDown,
+                        event : EServerCmd.CountDown,
                         clientId : clientId,
                         timer : timeCount,
                     }
-                    // console.log("countDown after  ==========  " , rooms[room][clientId]["player"])
+                    // console.log("countDown after  ==========  " , rooms[roomId][clientId]["player"])
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    if(rooms[room] && rooms[room][clientId]){
-                        Object.entries(rooms[room]).forEach(([, sock]) => {
-                            rooms[room][sock["player"]["id"]]["player"]["timer"] = timeCount;
+                    if(rooms[roomId] && rooms[roomId][clientId]){
+                        Object.entries(rooms[roomId]).forEach(([, sock]) => {
+                            rooms[roomId][sock["player"][EPlayerProfile.Id]]["player"]["timer"] = timeCount;
                            sock.sendBytes(buffer)
                         });
                     }
 
                 }
-                else if(meta === ServerCmd.Moving) {
+                else if(meta === EServerCmd.Moving) {
     
                     // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.pos);
                     let _posVelocity = parseVector3(data.velocity);
-                    rooms[room][clientId]["player"]["position"] = _pos;
+                    rooms[roomId][clientId]["player"][positionKey] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : ServerCmd.Moving,
+                        event : EServerCmd.Moving,
                         clientId : clientId,
                         velocity : _posVelocity,
                         h : data.h,
@@ -564,71 +593,71 @@ const PartyMatchSocket = (server) => {
                         // pos : _pos
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
     
                 }
-                else if(meta === ServerCmd.HitEnemy) {
+                else if(meta === EServerCmd.HitEnemy) {
     
                     // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.hitPos);
-                    // rooms[room][clientId]["player"]["position"] = _pos;
+                    // rooms[roomId][clientId]["player"][EPlayerProfile.Position] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : ServerCmd.HitEnemy,
+                        event : EServerCmd.HitEnemy,
                         clientId : clientId,
                         hitEnemyId : data.enemyId,
                         hitPos : _pos,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
     
                 }
-                else if(meta === ServerCmd.Stunned) {
+                else if(meta === EServerCmd.Stunned) {
     
                     // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.hitPos);
-                    // rooms[room][clientId]["player"]["position"] = _pos;
+                    // rooms[roomId][clientId]["player"][EPlayerProfile.Position] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : ServerCmd.Stunned,
+                        event : EServerCmd.Stunned,
                         clientId : clientId,
                         stunnedByEnemyId : data.enemyId,
                         hitPos : _pos,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
     
                 }
-                else if(meta === ServerCmd.UpdatePos) {
+                else if(meta === EServerCmd.UpdatePos) {
     
                     console.log("updatePos     data ===========  " , data)
                     let _pos = parseVector3(data.pos);
                     let _rot = parseQuaternion(data.rot);
-                    // rooms[room][clientId]["player"]["position"] = _pos;
+                    // rooms[roomId][clientId]["player"][EPlayerProfile.Position] = _pos;
                     // console.log("pos :   " , _pos);
                     let params = {
-                        event : ServerCmd.UpdatePos,
+                        event : EServerCmd.UpdatePos,
                         clientId : clientId,
                         pos : _pos,
                         rot : _rot,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
     
                 }
-                else if(meta === ServerCmd.RequestTarget) {
+                else if(meta === EServerCmd.RequestTarget) {
     
                     console.log("requestTarget  data ===========  " , data)
                     let params = {
-                        event : ServerCmd.ResponseTarget,
+                        event : EServerCmd.ResponseTarget,
                         clientId : clientId,
                         target : data.target,
                         ran1 : data.ran1,
@@ -637,79 +666,79 @@ const PartyMatchSocket = (server) => {
                         rans : data.rans,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                        sock.sendBytes(buffer)
                     });
     
                 }
-                else if(meta === ServerCmd.CubeFall) {
+                else if(meta === EServerCmd.CubeFall) {
                     console.log("cubeFall  data ===========  " , data)
                     let params = {
-                        event : ServerCmd.CubeFall,
+                        event : EServerCmd.CubeFall,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === ServerCmd.CubeReset) {
+                else if(meta === EServerCmd.CubeReset) {
                     console.log("cubeReset  data ===========  " , data)
                     let params = {
-                        event : ServerCmd.CubeReset,
+                        event : EServerCmd.CubeReset,
                         clientId : clientId,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === ServerCmd.RoundPass) {
-                    rooms[room][clientId]["player"]["round"] = parseInt(data.round);
+                else if(meta === EServerCmd.RoundPass) {
+                    rooms[roomId][clientId]["player"][EPlayerProfile.Round] = parseInt(data.round);
                     let params = {
-                        event : ServerCmd.RoundPass,
+                        event : EServerCmd.RoundPass,
                         clientId : clientId,
                         roundPass :  parseInt(data.round),
-                        countPlayer :  Object.keys(rooms[room]).length
+                        countPlayer :  Object.keys(rooms[roomId]).length
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === ServerCmd.PlayerDie) {
+                else if(meta === EServerCmd.PlayerDie) {
                     console.log("playerDie data ========================= " + data);
-                    rooms[room][clientId]["player"]["playerStatus"] = "die";
+                    rooms[roomId][clientId]["player"][EPlayerProfile.Status] = "die";
                     let params = {
-                        event : ServerCmd.PlayerDie,
+                        event : EServerCmd.PlayerDie,
                         clientId : clientId,
                         playerStatus :  "die"
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
     
                 }
-                else if(meta === ServerCmd.PlayerWin) {
-                    rooms[room][clientId]["player"]["playerStatus"] = "win";
-                    rooms[room][clientId]["player"]["roundPass"] = parseInt(data.roundPass);
+                else if(meta === EServerCmd.PlayerWin) {
+                    rooms[roomId][clientId]["player"][EPlayerProfile.Status] = "win";
+                    rooms[roomId][clientId]["player"]["roundPass"] = parseInt(data.roundPass);
                     let params = {
-                        event : ServerCmd.PlayerWin,
+                        event : EServerCmd.PlayerWin,
                         clientId : clientId,
                         playerStatus :  "win"
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === ServerCmd.EndGame) {
+                else if(meta === EServerCmd.EndGame) {
     
                     let players = [];
-                    Object.entries(rooms[room]).forEach(([, sock]) => {
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => {
                         players.push(sock.player);
                     });
                     // console.log("players  array ====================== " + players);
                     let params = {
-                        event : ServerCmd.EndGame,
+                        event : EServerCmd.EndGame,
                         clientId : clientId,
                         players :  players
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
-                    Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
+                    Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === ServerCmd.Leave) {
+                else if(meta === EServerCmd.Leave) {
     
                     leave(room);
     
@@ -717,7 +746,7 @@ const PartyMatchSocket = (server) => {
                 else if(! meta) {
                     // send the message to all in the room
     
-                    // Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes( JSON.stringify(param) ));
+                    // Object.entries(rooms[roomId]).forEach(([, sock]) => sock.sendBytes( JSON.stringify(param) ));
                 }
     
             }
