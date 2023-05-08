@@ -658,11 +658,7 @@ const PartyMatchSocket = (server) => {
                     console.log("requestTarget  data ===========  " , data)
                     let params = {
                         event : EServerCmd.ResponseTarget,
-                        clientId : clientId,
-                        target : data.target,
-                        ran1 : data.ran1,
-                        ran2 : data.ran2,
-                        ran3 : data.ran3,
+                        clientId : clientId,                                         
                         rans : data.rans,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
