@@ -541,7 +541,7 @@ const PartyMatchSocket = (server) => {
                        sock.sendBytes(buffer)
 
                        // cdp event start game
-                        let player = rooms[room][sock["player"]["id"]]["player"];
+                        let player = rooms[roomId][sock["player"][playerIdKey]]["player"];
                         let _state = {
                             user : {
                                 userAppId : player[appIdKey],
