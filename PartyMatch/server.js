@@ -414,6 +414,8 @@ const PartyMatchSocket = (server) => {
                     player[roomIdKey]    = roomId;
                     player[isSpectatorKey] = data[isSpectatorKey];
                     player[genderKey]      = data[genderKey];
+                    player[phoneNumberKey] = data[phoneNumberKey];
+                    player[followedOAKey]  = data[followedOAKey];
                     player[playerIndexKey] =  countPlayers [roomId][countPlayersKey];
                     countPlayers[roomId][countPlayersKey] = player[playerIndexKey] + 1;
 					countPlayers[roomId][aliveLobbyPlayerKey].push(player[playerIndexKey]);
