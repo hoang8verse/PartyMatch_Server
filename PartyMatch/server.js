@@ -242,7 +242,7 @@ const PartyMatchSocket = (server) => {
                 // console.log('Received Message binary :  ' +  message.binaryData);
                 const { meta, room } = data;
     
-                if(meta === "requestRoom") {
+                if(meta === ServerCmd.RequestRoom) {
                     console.log("playerLen =========== binary  " , parseInt(data.playerLen))
     
                     let host = data['host'];
@@ -316,7 +316,7 @@ const PartyMatchSocket = (server) => {
                                     if (sock.player.isStarted == "1") {
 
                                         let params = {
-                                            event: ServerCmd.FfailJoinRoom,
+                                            event: ServerCmd.FailJoinRoom,
                                             clientId: clientId,
                                             room: _room,
                                             message: "Room id : " + _room + " is started.",
@@ -345,7 +345,7 @@ const PartyMatchSocket = (server) => {
                     }
                     
                 }
-                else if(meta === "joinLobby") {
+                else if(meta === ServerCmd.JoinLobby) {
     
                     if(!rooms[room]){
                         rooms[room] = {}; // create the room
@@ -422,7 +422,7 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "gotoGame") {
+                else if(meta === ServerCmd.GotoGame) {
     
                     console.log("gotoGame  data ===========  " , data)
                     let params = {
@@ -436,7 +436,7 @@ const PartyMatchSocket = (server) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === "join") {
+                else if(meta === ServerCmd.Join) {
     
                     // console.log(' clientId ========  ' , clientId);
     
@@ -485,7 +485,7 @@ const PartyMatchSocket = (server) => {
                     });                   
     
                 }
-                else if(meta === "startGame") {
+                else if(meta === ServerCmd.StartGame) {
     
                     console.log("startGame  data ===========  " , data)
                     let maxTime = parseFloat(data.maxTime);
@@ -500,7 +500,7 @@ const PartyMatchSocket = (server) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === "checkPosition") {
+                else if(meta === ServerCmd.CheckPosition) {
     
                     console.log("checkPosition  data ===========  " , data)
                     let ranLength = parseInt(data.ranLength); 
@@ -517,7 +517,7 @@ const PartyMatchSocket = (server) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === "roundAlready") {
+                else if(meta === ServerCmd.RoundAlready) {
     
                     console.log("roundAlready  data ===========  " , data)
                     let params = {
@@ -529,7 +529,7 @@ const PartyMatchSocket = (server) => {
                        sock.sendBytes(buffer)
                     });
                 }
-                else if(meta === "countDown") {
+                else if(meta === ServerCmd.CountDown) {
     
                     console.log("countDown  data ===========  " , data)
                     let timeCount = parseInt(data.timer) - 1;
@@ -548,7 +548,7 @@ const PartyMatchSocket = (server) => {
                     }
 
                 }
-                else if(meta === "moving") {
+                else if(meta === ServerCmd.Moving) {
     
                     // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.pos);
@@ -569,7 +569,7 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "hitEnemy") {
+                else if(meta === ServerCmd.HitEnemy) {
     
                     // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.hitPos);
@@ -587,7 +587,7 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "stunned") {
+                else if(meta === ServerCmd.Stunned) {
     
                     // console.log("moving moving data ===========  " , data)
                     let _pos = parseVector3(data.hitPos);
@@ -605,7 +605,7 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "updatePos") {
+                else if(meta === ServerCmd.UpdatePos) {
     
                     console.log("updatePos     data ===========  " , data)
                     let _pos = parseVector3(data.pos);
@@ -624,7 +624,7 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "requestTarget") {
+                else if(meta === ServerCmd.RequestTarget) {
     
                     console.log("requestTarget  data ===========  " , data)
                     let params = {
@@ -634,6 +634,7 @@ const PartyMatchSocket = (server) => {
                         ran1 : data.ran1,
                         ran2 : data.ran2,
                         ran3 : data.ran3,
+                        rans : data.rans,
                     }
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => {
@@ -641,7 +642,7 @@ const PartyMatchSocket = (server) => {
                     });
     
                 }
-                else if(meta === "cubeFall") {
+                else if(meta === ServerCmd.CubeFall) {
                     console.log("cubeFall  data ===========  " , data)
                     let params = {
                         event : ServerCmd.CubeFall,
@@ -650,7 +651,7 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === "cubeReset") {
+                else if(meta === ServerCmd.CubeReset) {
                     console.log("cubeReset  data ===========  " , data)
                     let params = {
                         event : ServerCmd.CubeReset,
@@ -659,7 +660,7 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === "roundPass") {
+                else if(meta === ServerCmd.RoundPass) {
                     rooms[room][clientId]["player"]["round"] = parseInt(data.round);
                     let params = {
                         event : ServerCmd.RoundPass,
@@ -670,7 +671,7 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === "playerDie") {
+                else if(meta === ServerCmd.PlayerDie) {
                     console.log("playerDie data ========================= " + data);
                     rooms[room][clientId]["player"]["playerStatus"] = "die";
                     let params = {
@@ -682,7 +683,7 @@ const PartyMatchSocket = (server) => {
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
     
                 }
-                else if(meta === "playerWin") {
+                else if(meta === ServerCmd.PlayerWin) {
                     rooms[room][clientId]["player"]["playerStatus"] = "win";
                     rooms[room][clientId]["player"]["roundPass"] = parseInt(data.roundPass);
                     let params = {
@@ -693,7 +694,7 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === "endGame") {
+                else if(meta === ServerCmd.EndGame) {
     
                     let players = [];
                     Object.entries(rooms[room]).forEach(([, sock]) => {
@@ -708,7 +709,7 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     Object.entries(rooms[room]).forEach(([, sock]) => sock.sendBytes(buffer));
                 }
-                else if(meta === "leave") {
+                else if(meta === ServerCmd.Leave) {
     
                     leave(room);
     
