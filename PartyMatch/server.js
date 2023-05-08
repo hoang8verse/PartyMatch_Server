@@ -34,7 +34,7 @@ const PartyMatchSocket = (server) => {
 	};
     
     const EPlayerProfile = {   
-	    Id:"0",
+        ClientId:"0",
         Index:"1",
         AppId:"2",
         Avatar:"3",
@@ -53,7 +53,7 @@ const PartyMatchSocket = (server) => {
         AliveLobbyPlayers:"16",
         CountPlayers:"17"
 	};
-	const playerIdKey =  EPlayerProfile.Id;
+	const playerIdKey =  EPlayerProfile.ClientId;
 	const nickNameKey =  EPlayerProfile.NickName;
 	const appIdKey = EPlayerProfile.AppId;
 	const avatarKey = EPlayerProfile.Avatar;	
@@ -204,9 +204,9 @@ const PartyMatchSocket = (server) => {
                 if(rooms[roomId][clientId]["player"][isHostKey] == "1"){
                     Object.entries(rooms[roomId]).forEach(([, sock]) => {
                         // console.log("leave leave sock aaaa ad=====  " , sock["player"]);
-                        if(sock["player"][EPlayerProfile.Id] != clientId && !isFindNewHost){
-                            rooms[roomId][sock["player"][EPlayerProfile.Id]]["player"][isHostKey] = "1";
-                            checkNewHost = sock["player"][EPlayerProfile.Id];
+                        if(sock["player"][playerIdKey] != clientId && !isFindNewHost){
+                            rooms[roomId][sock["player"][playerIdKey]]["player"][isHostKey] = "1";
+                            checkNewHost = sock["player"][playerIdKey];
                             isFindNewHost = true;
                             console.log(" new host ------  " , sock["player"]);
                         }
@@ -463,7 +463,7 @@ const PartyMatchSocket = (server) => {
                     console.log("gotoGame  buffer========  " , buffer)
                     // console.log("startGame  rooms[roomId]========  " , rooms[roomId])
                     Object.entries(rooms[roomId]).forEach(([, sock]) => {
-                        rooms[roomId][sock["player"][EPlayerProfile.Id]]["player"][EPlayerProfile.IsStarted] = "1";
+                        rooms[roomId][sock["player"][playerIdKey]]["player"][EPlayerProfile.IsStarted] = "1";
                        sock.sendBytes(buffer)
                     });
                 }
@@ -571,7 +571,7 @@ const PartyMatchSocket = (server) => {
                     let buffer = Buffer.from(JSON.stringify(params), 'utf8');
                     if(rooms[roomId] && rooms[roomId][clientId]){
                         Object.entries(rooms[roomId]).forEach(([, sock]) => {
-                            rooms[roomId][sock["player"][EPlayerProfile.Id]]["player"]["timer"] = timeCount;
+                            rooms[roomId][sock["player"][playerIdKey]]["player"]["timer"] = timeCount;
                            sock.sendBytes(buffer)
                         });
                     }
